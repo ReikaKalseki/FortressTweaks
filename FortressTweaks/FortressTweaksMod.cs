@@ -5,7 +5,7 @@ using System.Collections.Generic;   //Working with Lists and Collections
 using System.Linq;   //More advanced manipulation of lists/collections
 using System.Threading;
 using Harmony;
-using ReikaKalseki;
+using ReikaKalseki.FortressTweaks;
 
 namespace ReikaKalseki.FortressTweaks
 {
@@ -40,6 +40,21 @@ namespace ReikaKalseki.FortressTweaks
         }
         
         return registrationData;
+    }
+    
+    public static StorageMachineInterface getStorageHandlerForEntityForBelt(Segment s, long x, long y, long z, ConveyorEntity belt) {
+    	SegmentEntity ret = s.SearchEntity(x, y, z);
+    	if (belt.mValue == 15) {
+    		//Debug.Log("Motor belt at "+new Coordinate(belt)+" is pulling from a "+ret+" at "+new Coordinate(ret));
+    	}
+    	if (ret is ContinuousCastingBasin && belt.mValue == 15) { //motor belt
+    		ContinuousCastingBasin ccb = ret as ContinuousCastingBasin;
+    		ccb = ccb.GetCenter();
+    		return ccb != null ? new BasinInterfaceWrapper(ccb) : null;
+    	}
+    	else {
+    		return ret as StorageMachineInterface;
+    	}
     }
     
     public static bool canCubeBeMouseClicked(ushort ID, ref CubeData data) { //hydroponics bays are the same ID as canopies

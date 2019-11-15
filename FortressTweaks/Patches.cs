@@ -62,6 +62,32 @@ namespace ReikaKalseki.FortressTweaks {
 		}
 	}
 	
+	[HarmonyPatch(typeof(ConveyorEntity))]
+	[HarmonyPatch("LookForHopper")]
+	public static class ConveyorItemExtraction {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Callvirt, "Segment", "SearchEntity", true, new Type[]{typeof(long), typeof(long), typeof(long)});
+				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
+				codes.RemoveAt(loc+1); //isinst
+				codes[loc].operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getStorageHandlerForEntityForBelt", false, new Type[]{typeof(Segment), typeof(long), typeof(long), typeof(long), typeof(ConveyorEntity)});
+				codes.Insert(loc, new CodeInstruction(OpCodes.Ldarg_0));
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
 	static class Lib {
 		
 		internal static void seekAndPatch(List<CodeInstruction> codes) {
@@ -78,7 +104,7 @@ namespace ReikaKalseki.FortressTweaks {
 		}
 		
 		private static void patch(List<CodeInstruction> codes, int loc) {
-			int nextCall = InstructionHandlers.getLastInstructionBefore(codes, loc, OpCodes.Callvirt, "Segment", "GetCubeDataNoChecking", false, new Type[]{typeof(int), typeof(int), typeof(int), typeof(ushort).MakeByRefType(), typeof(CubeData).MakeByRefType()});
+			int nextCall = InstructionHandlers.getLastInstructionBefore(codes, loc, OpCodes.Callvirt, "Segment", "GetCubeDataNoChecking", true, new Type[]{typeof(int), typeof(int), typeof(int), typeof(ushort).MakeByRefType(), typeof(CubeData).MakeByRefType()});
 			FileLog.Log("Found ref "+InstructionHandlers.toString(codes, nextCall));
 			object val = codes[nextCall-1].operand;
 			codes[loc].operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "canCubeBeMouseClicked", false, new Type[]{typeof(ushort), typeof(CubeData).MakeByRefType()});
