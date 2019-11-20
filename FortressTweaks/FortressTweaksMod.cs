@@ -39,7 +39,20 @@ namespace ReikaKalseki.FortressTweaks
 			FileLog.Log(e.ToString());
         }
         
+        CubeHelper.mabIsCubeTypeGlass[eCubeTypes.EnergyGrommet] = true;
+        CubeHelper.mabIsCubeTypeGlass[eCubeTypes.LogisticsGrommet] = true;
+        
         return registrationData;
+    }
+    
+    public static float getGrappleCooldown(float orig) {
+    	return PlayerInventory.mbPlayerHasMK3BuildGun ? Math.Min(orig, 0.2F) : orig;
+    }
+    
+    public static bool isCubeGlassForRoom(ushort blockID, RoomController rc) {
+    	if (blockID == eCubeTypes.EnergyGrommet || blockID == eCubeTypes.LogisticsGrommet)
+    		return false;
+    	return CubeHelper.IsCubeGlass((int)blockID);
     }
     
     public static StorageMachineInterface getStorageHandlerForEntityForBelt(Segment s, long x, long y, long z, ConveyorEntity belt) {
