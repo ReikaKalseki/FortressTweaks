@@ -41,8 +41,54 @@ namespace ReikaKalseki.FortressTweaks
         
         CubeHelper.mabIsCubeTypeGlass[eCubeTypes.EnergyGrommet] = true;
         CubeHelper.mabIsCubeTypeGlass[eCubeTypes.LogisticsGrommet] = true;
+        CubeHelper.mabIsCubeTypeGlass[eCubeTypes.HeatConductingPipe] = true;
+        CubeHelper.mabIsCubeTypeGlass[eCubeTypes.CastingPipe] = true;
+        CubeHelper.mabIsCubeTypeGlass[eCubeTypes.T4_GenericPipe] = true;
+        
+        FreightCartMob.OreFreighterWithdrawalPerTick = 25; //base is 5, barely better than minecarts
         
         return registrationData;
+    }
+    
+    public static float getMagmaborePowerCost(float orig, T4_MagmaBore bore) {
+    	float ret = orig;
+    	if (DifficultySettings.mbEasyPower)
+    		ret *= 0.8F;
+    	if (DifficultySettings.mbCasualResource)
+    		ret *= 0.5F;
+    	else if (DifficultySettings.mbEasyResources)
+    		ret *= 0.75F;
+    	if (DifficultySettings.mbRushMode)
+    		ret *= 0.5F;
+    	return ret;
+    }
+    
+    public static float getCompressorSpeed(float orig, T4_ParticleCompressor filter) {
+    	if (!DifficultySettings.mbCasualResource)
+    		return orig;
+    	float f = filter.mrCurrentPower/filter.mrMaxPower;
+    	if (f < 0.5) {
+    		return orig;
+    	}
+    	float ratio = Math.Min(4F, (f-0.5F)*2*4.1F);
+    	return ratio*orig;
+    }
+    
+    public static int getProducedGas(int orig, T4_ParticleFilter filter) {
+    	if (!DifficultySettings.mbCasualResource)
+    		return orig;
+    	float f = filter.mrCurrentPower/filter.mrMaxPower;
+    	if (f < 0.5) {
+    		return orig;
+    	}
+    	float ratio = Math.Min(4, (f-0.5F)*2*4.1F);
+    	float power = Math.Min(filter.mrCurrentPower, Math.Max(0, (ratio-1)*10)); //extra 10PPS for each 1x increase
+    	filter.mrCurrentPower -= power; 
+    	return (int)(orig*ratio);
+    }
+    
+    public static bool isCubeGeoPassable(ushort ID, GeothermalGenerator gen) {
+    	return ID == eCubeTypes.Magma || ID == eCubeTypes.MagmaFluid || ID == eCubeTypes.Magmacite || (CubeHelper.IsOre(ID) && gen.mShaftEndY < -1050);
     }
     
     public static float getGrappleCooldown(float orig) {

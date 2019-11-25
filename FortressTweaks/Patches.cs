@@ -147,6 +147,116 @@ namespace ReikaKalseki.FortressTweaks {
 		}
 	}
 	
+	[HarmonyPatch(typeof(GeothermalGenerator))]
+	[HarmonyPatch("AttemptDigShaft")]
+	public static class GeoShaftDiggingPatch {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Call, "TerrainData", "GetHardness", false, new Type[]{typeof(ushort), typeof(ushort)});
+				loc = InstructionHandlers.getInstruction(codes, loc, 0, OpCodes.Ldc_I4);
+				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
+				codes[loc] = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "isCubeGeoPassable", false, new Type[]{typeof(ushort), typeof(GeothermalGenerator)});
+				codes[loc+1].opcode = OpCodes.Brfalse;
+				codes.Insert(loc, new CodeInstruction(OpCodes.Ldarg_0));
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(T4_ParticleFilter))]
+	[HarmonyPatch("LowFrequencyUpdate")]
+	public static class ParticleSpeedPatch {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldsfld, "DifficultySettings", "mbCasualResource");
+				loc = InstructionHandlers.getInstruction(codes, loc, 0, OpCodes.Add);
+				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
+				List<CodeInstruction> inject = new List<CodeInstruction>();
+				inject.Add(new CodeInstruction(OpCodes.Ldarg_0));
+				inject.Add(InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getProducedGas", false, new Type[]{typeof(int), typeof(T4_ParticleFilter)}));
+				codes.InsertRange(loc, inject);
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(T4_ParticleCompressor))]
+	[HarmonyPatch("LowFrequencyUpdate")]
+	public static class CompressorSpeedPatch {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldfld, "T4_ParticleCompressor", "CompressionTimer");
+				loc = InstructionHandlers.getInstruction(codes, loc, 0, OpCodes.Add);
+				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
+				List<CodeInstruction> inject = new List<CodeInstruction>();
+				inject.Add(new CodeInstruction(OpCodes.Ldarg_0));
+				inject.Add(InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getCompressorSpeed", false, new Type[]{typeof(float), typeof(T4_ParticleCompressor)}));
+				codes.InsertRange(loc, inject);
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(T4_MagmaBore))]
+	[HarmonyPatch(MethodType.Constructor, new Type[] {typeof(Segment), typeof(long), typeof(long), typeof(long), typeof(ushort), typeof(byte), typeof(ushort), typeof(bool)})]
+	public static class MagmaboreCostPatch {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Stfld, "T4_MagmaBore", "TotalDrillPowerRequired");
+				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
+				List<CodeInstruction> inject = new List<CodeInstruction>();
+				inject.Add(new CodeInstruction(OpCodes.Ldarg_0));
+				inject.Add(InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getMagmaborePowerCost", false, new Type[]{typeof(float), typeof(T4_MagmaBore)}));
+				codes.InsertRange(loc, inject);
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
 	static class Lib {
 		
 		internal static void seekAndPatchCubeSelect(List<CodeInstruction> codes) {

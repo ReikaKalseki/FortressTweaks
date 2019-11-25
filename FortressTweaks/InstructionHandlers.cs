@@ -97,7 +97,10 @@ namespace ReikaKalseki.FortressTweaks
 			}
 			else if (insn.opcode == OpCodes.Ldarg) { //int pos
 				return insn.operand == args[0];
-			}
+			}/*
+			else if (insn.opcode == OpCodes.Ldc_I4 || insn.opcode == OpCodes.Ldc_R4 || insn.opcode == OpCodes.Ldc_I8 || insn.opcode == OpCodes.Ldc_R8) { //ldc
+				return insn.operand == args[0];
+			}*/
 			return true;
 		}
 		
