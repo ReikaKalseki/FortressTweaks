@@ -257,6 +257,67 @@ namespace ReikaKalseki.FortressTweaks {
 		}
 	}
 	
+	[HarmonyPatch(typeof(FALCOR_Beacon))]
+	[HarmonyPatch("UpdateClearance")]
+	public static class FalcorSkyPatch {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Stfld) {
+						CodeInstruction cp = codes[i-1];
+						FieldInfo look = InstructionHandlers.convertFieldOperand("FALCOR_Beacon", "mbSolarBlocked");
+						if (ci.operand == look) {
+							FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, i));
+							cp.opcode = OpCodes.Ldc_I4_0;
+						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(PowerStorageBlock))]
+	[HarmonyPatch("TransferPowerToAdjacentItem")]
+	public static class PSBSharePatch {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Div) {
+						codes.Insert(i+1, InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getSharedPSBPower", false, new Type[]{typeof(PowerStorageBlock), typeof(PowerStorageBlock), typeof(float)}));
+						codes.Insert(i+1, new CodeInstruction(OpCodes.Ldloc_S, 6)); //original amt
+						codes.Insert(i+1, new CodeInstruction(OpCodes.Ldloc_S, 5)); //other psb
+						codes.Insert(i+1, new CodeInstruction(OpCodes.Ldarg_0)); //this
+						break;
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
 	static class Lib {
 		
 		internal static void seekAndPatchCubeSelect(List<CodeInstruction> codes) {

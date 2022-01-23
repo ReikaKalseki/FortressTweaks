@@ -101,6 +101,12 @@ namespace ReikaKalseki.FortressTweaks
     	return CubeHelper.IsCubeGlass((int)blockID);
     }
     
+    public static float getSharedPSBPower(PowerStorageBlock from, PowerStorageBlock to, float orig) {
+    	float max = Math.Min(from.mrCurrentPower, to.mrPowerSpareCapacity);
+    	float buff = from.mrMaxPower/to.mrMaxPower; //eg 1500/200 = 7.5x for blue/green, 5000/1500 = 3.33x purple/blue, 5000/200 = 25x purple/green
+    	return Math.Min(max*0.8F, orig*Math.Max(1, buff/5F)); //max flow rate blue/green goes from 40 to 100, for purple/blue unchanged (300), for purple/green goes from 40 to 160
+    }
+    
     public static StorageMachineInterface getStorageHandlerForEntityForBelt(Segment s, long x, long y, long z, ConveyorEntity belt) {
     	SegmentEntity ret = s.SearchEntity(x, y, z);
     	if (belt.mValue == 15) {
