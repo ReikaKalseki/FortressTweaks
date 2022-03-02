@@ -16,6 +16,39 @@ namespace ReikaKalseki.FortressTweaks
 			
 		}
 		
+		internal static long getIntFromOpcode(CodeInstruction ci) {
+			switch (ci.opcode.Name) {
+				case "ldc.i4.m1":
+				return -1;
+				case "ldc.i4.0":
+				return 0;
+				case "ldc.i4.1":
+				return 1;
+				case "ldc.i4.2":
+				return 2;
+				case "ldc.i4.3":
+				return 3;
+				case "ldc.i4.4":
+				return 4;
+				case "ldc.i4.5":
+				return 5;
+				case "ldc.i4.6":
+				return 6;
+				case "ldc.i4.7":
+				return 7;
+				case "ldc.i4.8":
+				return 8;
+				case "ldc.i4.s":
+				return (int)((sbyte)ci.operand);
+				case "ldc.i4":
+				return (int)ci.operand;
+				case "ldc.i8":
+				return (long)ci.operand;
+			default:
+				return Int64.MaxValue;
+			}
+		}
+		
 		internal static void nullInstructions(List<CodeInstruction> li, int begin, int end) {
 			for (int i = begin; i <= end; i++) {
 				CodeInstruction insn = li[i];
@@ -61,6 +94,28 @@ namespace ReikaKalseki.FortressTweaks
 						else
 							count++;
 					}
+				}
+			}
+			return -1;
+		}
+		
+		internal static int getFirstOpcode(List<CodeInstruction> li, int index, OpCode opcode) {
+			for (int i = index; i < li.Count; i++) {
+				CodeInstruction insn = li[i];
+				if (insn.opcode == opcode) {
+					return i;
+				}
+			}
+			return -1;
+		}
+		
+		internal static int getLastOpcodeBefore(List<CodeInstruction> li, int before, OpCode opcode) {
+			if (before > li.Count)
+				before = li.Count;
+			for (int i = before-1; i >= 0; i--) {
+				CodeInstruction insn = li[i];
+				if (insn.opcode == opcode) {
+					return i;
 				}
 			}
 			return -1;

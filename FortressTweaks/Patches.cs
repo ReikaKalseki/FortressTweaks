@@ -125,12 +125,13 @@ namespace ReikaKalseki.FortressTweaks {
 					CodeInstruction ci = codes[i];
 					if (ci.opcode == OpCodes.Stfld) {
 						CodeInstruction cp = codes[i-1];
-						if (cp.opcode == OpCodes.Ldc_R4) {
-							FieldInfo look = InstructionHandlers.convertFieldOperand("SurvivalGrapplingHook", "mrGrappleDebounce");
-							if (ci.operand == look) {
+						if (cp.opcode == OpCodes.Ldc_R4 || (cp.opcode == OpCodes.Call && cp.operand is MethodInfo && ((MethodInfo)cp.operand).DeclaringType.BaseType == typeof(FortressCraftMod))) { //Mod compat
+							FieldInfo look = cp.opcode == OpCodes.Call ? null : InstructionHandlers.convertFieldOperand("SurvivalGrapplingHook", "mrGrappleDebounce");
+							if (ci.operand == look || cp.opcode == OpCodes.Call) {
 								FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, i));
 								CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getGrappleCooldown", false, new Type[]{typeof(float)});
 								codes.Insert(i, call);
+								i += 2;
 							}
 						}
 					}
@@ -299,8 +300,8 @@ namespace ReikaKalseki.FortressTweaks {
 				for (int i = 0; i < codes.Count; i++) {
 					CodeInstruction ci = codes[i];
 					if (ci.opcode == OpCodes.Div) {
-						codes.Insert(i+1, InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getSharedPSBPower", false, new Type[]{typeof(PowerStorageBlock), typeof(PowerStorageBlock), typeof(float)}));
-						codes.Insert(i+1, new CodeInstruction(OpCodes.Ldloc_S, 6)); //original amt
+						codes.Insert(i+1, InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getSharedPSBPower", false, new Type[]{typeof(float), typeof(PowerStorageBlock), typeof(PowerStorageBlock)}));
+						//codes.Insert(i+1, new CodeInstruction(OpCodes.Ldloc_S, 6)); //original amt
 						codes.Insert(i+1, new CodeInstruction(OpCodes.Ldloc_S, 5)); //other psb
 						codes.Insert(i+1, new CodeInstruction(OpCodes.Ldarg_0)); //this
 						break;
@@ -318,6 +319,598 @@ namespace ReikaKalseki.FortressTweaks {
 		}
 	}
 	
+	[HarmonyPatch(typeof(ItemManager))]
+	[HarmonyPatch("UpdateItem")]
+	public static class ItemDespawnPatch {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Sub) {
+						CodeInstruction next = codes[i+1];
+						if (next.opcode == OpCodes.Stfld && ((FieldInfo)next.operand).Name == "mrLifeRemaining") {
+							CodeInstruction prev = codes[i-1];
+							if (prev.opcode == OpCodes.Ldsfld) { //IL_002e: ldsfld float32 LowFrequencyThread::mrPreviousUpdateTimeStep
+								prev.opcode = OpCodes.Ldc_R4;
+								prev.operand = 0F;
+								FileLog.Log("Done patch A");
+							}
+							else if (prev.opcode == OpCodes.Ldc_R4) { //IL_005c: ldc.r4 1
+								prev.operand = 0F;
+								FileLog.Log("Done patch B");
+								break;
+							}
+						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(TD_WaspMob))]
+	[HarmonyPatch("DropLoot")]
+	public static class TDMobDropGuarantee {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Ldsfld && ((FieldInfo)ci.operand).Name == "mnTotalItemsUpdated") {
+						CodeInstruction next = codes[i+1];
+						if (ci.opcode == OpCodes.Ldc_I4) {
+							next.operand = Int32.MaxValue;
+							break;
+						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(MobSpawnManager))]
+	[HarmonyPatch("UpdateBombardment")]
+	public static class OrbitalStrikeIntercept {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Callvirt && ((MethodInfo)ci.operand).Name == "Explode") {
+						ci.opcode = OpCodes.Call;
+						ci.operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "doOETBlockEffects", false, new Type[]{typeof(WorldScript), typeof(long), typeof(long), typeof(long), typeof(int), typeof(int)});
+						break;
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(OrbitalEnergyTransmitter))]
+	[HarmonyPatch("LowFrequencyUpdate")]
+	public static class OETChargeHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "updateOETRequiredCharge", false, new Type[0]);
+				codes.Insert(0, call);
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(OrbitalStrikeController))]
+	[HarmonyPatch("LowFrequencyUpdate")]
+	public static class OETCallHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int ret = InstructionHandlers.getLastOpcodeBefore(codes, codes.Count, OpCodes.Ret);
+				int call = InstructionHandlers.getLastOpcodeBefore(codes, ret, OpCodes.Callvirt);
+				codes[call].opcode = OpCodes.Call;
+				codes[call].operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "deleteOET", false, new Type[]{typeof(WorldScript), typeof(Segment), typeof(long), typeof(long), typeof(long), typeof(ushort)});
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(Room_Airlock))]
+	[HarmonyPatch("SearchForLink")]
+	public static class AirlockSeekHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int ret = InstructionHandlers.getLastOpcodeBefore(codes, codes.Count, OpCodes.Ret);
+				CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "guaranteeAirlock", false, new Type[]{typeof(Room_Airlock)});
+				codes.Insert(ret, call);
+				CodeInstruction ldself = new CodeInstruction(OpCodes.Ldarg_0);
+				codes.Insert(ret, ldself);
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(RoomController))]
+	[HarmonyPatch("ScanRoom")]
+	public static class AirlockSeekHook2 {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Ldfld && ((FieldInfo)ci.operand).Name == "LinkedAirLock") {
+						ci.opcode = OpCodes.Call;
+						ci.operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "guaranteeAirlockDuringCheck", false, new Type[]{typeof(Room_Airlock)});
+						break;
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(WormBoss))]
+	[HarmonyPatch(MethodType.Constructor, new Type[] {typeof(WormBoss.eBossType)})]
+	public static class WormRevealer {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Stfld && ((FieldInfo)ci.operand).Name == "mnHideDistance") {
+						codes[i-1].opcode = OpCodes.Ldc_I4;
+						codes[i-1].operand = 1024;
+					}
+					if (ci.opcode == OpCodes.Stfld && ((FieldInfo)ci.operand).Name == "mnEruptDistance") {
+						codes[i-1].opcode = OpCodes.Ldc_I4;
+						codes[i-1].operand = 512;
+						break;
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(MatterMover))]
+	[HarmonyPatch(MethodType.Constructor, new Type[] {typeof(Segment), typeof(long), typeof(long), typeof(long), typeof(ushort), typeof(byte), typeof(ushort)})]
+	public static class MatterMitterRangeRescale {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Stfld && ((FieldInfo)ci.operand).Name == "mnMaxTransmitDistance") {
+						CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "setMMRange", false, new Type[]{typeof(MatterMover)});
+						codes.Insert(i+1, call);
+						CodeInstruction ldself = new CodeInstruction(OpCodes.Ldarg_0);
+						codes.Insert(i+1, ldself);
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(InductionCharger))]
+	[HarmonyPatch(MethodType.Constructor, new Type[] {typeof(Segment), typeof(long), typeof(long), typeof(long), typeof(ushort), typeof(byte), typeof(ushort), typeof(bool)})]
+	public static class InductionChargerUncap {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Stfld) {
+						FieldInfo fi = (FieldInfo)ci.operand;
+						if (fi.Name == "mrMaxPower" || fi.Name == "mrMaxTransferRate" || fi.Name == "mrMaxTransferRateOut") {
+							codes[i-1].operand = 65536F;
+						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(T4_Conduit))]
+	[HarmonyPatch(MethodType.Constructor, new Type[] {typeof(Segment), typeof(long), typeof(long), typeof(long), typeof(ushort), typeof(byte), typeof(ushort), typeof(bool)})]
+	public static class ConduitCapacityBoost {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Stfld) {
+						FieldInfo fi = (FieldInfo)ci.operand;
+						if (fi.Name == "mrMaxPower" || fi.Name == "mrMaxTransferRate") {
+							codes[i-1].operand = fi.Name == "mrMaxPower" ? 16384F : 65536F; //transfer +50% and storage 6.5x to fix the difficulty-based scaling
+						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(FreightCartMob))]
+	[HarmonyPatch("SetStatsFromType")]
+	public static class NonOreFreightBoost {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Stfld) {
+						FieldInfo fi = (FieldInfo)ci.operand;
+						if (fi.Name == "mnMaxStorage") {
+							long prev = InstructionHandlers.getIntFromOpcode(codes[i-1]);
+							if (prev <= 100) {
+								int put = (int)(prev*4);
+								codes[i-1].operand = put < 127 ? (sbyte)put : put; //x4 like all the others got
+								codes[i-1].opcode = put >= 127 ? OpCodes.Ldc_I4 : OpCodes.Ldc_I4_S;
+							}
+						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(FreightCartMob))]
+	[HarmonyPatch("UpdateCartUnload")]
+	public static class NonOreFreightBoost2 {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Callvirt) {
+						MethodInfo fi = (MethodInfo)ci.operand;
+						if (fi.Name == "RemoveAnySingle") {
+							CodeInstruction prev = codes[i-1];
+							if (prev.opcode == OpCodes.Ldc_I4_1) {
+								prev.opcode = OpCodes.Ldc_I4_5;
+							}
+						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(FreightCartMob))]
+	[HarmonyPatch("GetNextOffer")]
+	public static class NonOreFreightBoost3 {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Stloc_S) {
+						//Type type = ci.operand != null ? ci.operand.GetType() : null;
+						//string name = type != null ? type.FullName : "null";
+						//FileLog.Log("Type: "+name+" val = "+ci.operand);
+						if (((LocalBuilder)ci.operand).LocalIndex == 4) {
+							CodeInstruction prev = codes[i-1];
+							if (prev.opcode == OpCodes.Ldc_I4_1) {
+								prev.opcode = OpCodes.Ldc_I4_5;
+							}
+						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(BlastFurnace))]
+	[HarmonyPatch("UpdateCheckBasin")]
+	public static class CastingPipeRangeExtender {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Ldc_I4_S && ((sbyte)ci.operand) == 31) {
+						ci.operand = 96;
+						break;
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(GenericAutoCrafterNew))]
+	[HarmonyPatch("LowFrequencyUpdate")]
+	public static class GACRamp {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Stfld && ((FieldInfo)ci.operand).Name == "mrCraftingTimer") {
+						CodeInstruction prev = codes[i-1];
+						if (prev.opcode == OpCodes.Sub) {
+							CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "progressGACTimer", false, new Type[]{typeof(float), typeof(float), typeof(GenericAutoCrafterNew)});
+							codes.Insert(i, call);
+							CodeInstruction ldself = new CodeInstruction(OpCodes.Ldarg_0);
+							codes[i-1] = ldself;
+							break;
+						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(ForcedInduction))]
+	[HarmonyPatch("LowFrequencyUpdate")]
+	public static class InductionSpeedBoost {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int idx = 0;
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Callvirt && ((MethodInfo)ci.operand).Name == "SetSmelterBurnRate") {
+						CodeInstruction prev = codes[i-1];
+						if (prev.opcode == OpCodes.Ldc_R4) {
+							float speed = (float)prev.operand;
+							if (Math.Abs(4-speed) <= 0.1) {
+								prev.operand = speed+idx;
+								idx++; //after because it fires for mk3 at a speed of 4 too
+							}
+						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+
+	[HarmonyPatch(typeof(AudioMusicManager))]
+	[HarmonyPatch("GetCurrentMusicSource")]
+	public static class MusicSelectionRewrite {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>();
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_0));
+				CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.MusicReplacement", "getMusicCategory", false, new Type[]{typeof(AudioMusicManager)});
+				codes.Add(call);
+				codes.Add(new CodeInstruction(OpCodes.Ret));
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	/*
+	[HarmonyPatch(typeof(AudioMusicManager))]
+	[HarmonyPatch("GetCurrentMusicSource")]
+	public static class DeadOvermindSoundDisable {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Ldc_I4_S && ((sbyte)ci.operand) == -32) {
+						CodeInstruction ci2 = codes[i+2];
+						if (ci2.opcode == OpCodes.Ble) {
+							CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "checkOvermindMusic", false, new Type[0]);
+							CodeInstruction skip = new CodeInstruction(OpCodes.Br_S, ci2.operand);
+							codes.Insert(i+3, skip);
+							codes.Insert(i+3, call);
+						}
+						break;
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(AudioMusicManager))]
+	[HarmonyPatch("GetCurrentMusicSource")]
+	public static class C5MusicSwitchDisable {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Ldsfld && ((FieldInfo)ci.operand).Name == "ActiveAndWorking") {
+						ci.operand = InstructionHandlers.convertFieldOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "useMagmaMusicInFF");
+						break;
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	*/
 	static class Lib {
 		
 		internal static void seekAndPatchCubeSelect(List<CodeInstruction> codes) {
