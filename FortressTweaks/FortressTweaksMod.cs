@@ -114,7 +114,7 @@ namespace ReikaKalseki.FortressTweaks
     }
     
     public static bool isCubeGeoPassable(ushort ID, GeothermalGenerator gen) {
-    	return ID == eCubeTypes.Magma || ID == eCubeTypes.MagmaFluid || ID == eCubeTypes.Magmacite || (CubeHelper.IsOre(ID) && gen.mShaftEndY < -1050);
+    	return ID == eCubeTypes.Magma || ID == eCubeTypes.MagmaFluid || ID == eCubeTypes.Magmacite || (CubeHelper.IsOre(ID) && gen.mShaftEndY < -1000);
     }
     
     public static float getGrappleCooldown(float orig) {
