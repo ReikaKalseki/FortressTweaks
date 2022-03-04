@@ -1,0 +1,31 @@
+<ArrayOfItemEntry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<ItemEntry>
+		<ItemID>4015</ItemID>
+		<Key>HiveBrainMatter</Key>
+		<Name>Hive Brain Matter</Name>
+		<Plural>Hive Brain Matter</Plural>
+		<Type>ItemStack</Type>	
+		<Object>AnimatedHiveBrain</Object>
+		<Sprite>Brain Matter</Sprite>
+		<!-- Atlas optional -->
+		<Category>CraftingIngredient</Category>
+		<DecomposeValue>25</DecomposeValue> <!-- now gives 25 research points when analysed -->
+		<IsOverride>true</IsOverride>
+	</ItemEntry>
+	  <ItemEntry>
+		<Key>ReikaKalseki.ItemMagnet</Key>
+		<Name>Item Magnet</Name>
+		<Plural>Item Magnets</Plural>
+		<Type>ItemStack</Type>	
+		<Object>UnknownItem</Object><!-- Obviously placeholder :D we display this when it's dropped -->
+		<Sprite>Solar Cell MK1</Sprite>
+		<!-- Atlas optional -->
+		<Category>SuitUpgrade</Category>
+		<ResearchRequirements>
+			<Research>suit upgrades</Research>
+		</ResearchRequirements>
+    <ScanRequirements>
+      <Scan>LithiumOre</Scan>
+    </ScanRequirements>
+	  </ItemEntry>
+</ArrayOfItemEntry>

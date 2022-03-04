@@ -1,0 +1,490 @@
+<ArrayOfCraftData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<CraftData>
+		<Key>ReikaKalseki.RecombinedBrain</Key>
+		<Category>CraftingIngredient</Category>
+		<Tier>0</Tier>
+		<CraftedKey>HiveBrainMatter</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>RecombinedOrganicMatter</Key>
+				<Amount>60</Amount>
+			</CraftCost>
+		</Costs>
+		<Description></Description>
+		<Hint></Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.ItemMagnet</Key>
+		<Category>SuitUpgrade</Category>
+		<Tier>1</Tier>
+		<CraftedKey>ReikaKalseki.ItemMagnet</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>IronGear</Key>
+				<Amount>30</Amount>
+			</CraftCost>
+			<CraftCost>
+				<Key>SpiderBotPowerCore</Key>
+				<Amount>60</Amount>
+			</CraftCost>
+			<CraftCost>
+				<Key>LightweightMachineHousing</Key>
+				<Amount>10</Amount>
+			</CraftCost>
+		</Costs>
+		<Description>Greatly increases your item collection range.</Description>
+		<Hint>Suit item! You only need one! Does not stack!</Hint>
+		<CanCraftAnywhere>false</CanCraftAnywhere>
+		<ResearchCost>5</ResearchCost>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.BufferCross1</Key>
+		<Category>minecarts</Category>
+		<Tier>4</Tier>
+		<CraftedKey>MinecartBufferFull</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>MinecartBufferEmpty</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		<Description></Description>
+		<Hint></Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.BufferCross2</Key>
+		<Category>minecarts</Category>
+		<Tier>4</Tier>
+		<CraftedKey>MinecartBufferEmpty</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>MinecartBufferFull</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		<Description></Description>
+		<Hint></Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.CCBPlacementConvert</Key>
+		<Category>smelting</Category>
+		<Tier>4</Tier>
+		<CraftedKey>CastingBasinPlacement</CraftedKey>
+		<CraftedAmount>5</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>BlastFurnacePlacement</Key>
+				<Amount>9</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<ResearchRequirements>
+			<Research>T4 ore extracting</Research>
+		</ResearchRequirements>
+		
+		<Description>This turns liquid metal into bars at a high rate. Capable of dealing with Chromium and Molybdenum. Build in a 5x3x5 configuration.  (75 total)</Description>
+		<Hint>Attach to 4 Blast Furnaces for maximum efficiency.</Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.BlastFurnacePlacementConvert</Key>
+		<Category>smelting</Category>
+		<Tier>4</Tier>
+		<CraftedKey>BlastFurnacePlacement</CraftedKey>
+		<CraftedAmount>9</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>CastingBasinPlacement</Key>
+				<Amount>5</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<ResearchRequirements>
+			<Research>T4 ore extracting</Research>
+		</ResearchRequirements>
+		
+		<Description>This turns raw ore into liquid slag at a high rate. Capable of dealing with Chromium and Molybdenum. Build in a 3x7x3 configuration. (63 total)</Description>
+		<Hint>Use Pipes to connect this.</Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.AmpuleUncraft1</Key>
+		<Category>consumables</Category>
+		<Tier>1</Tier>
+		<CraftedKey>Seed_UnderGrump</CraftedKey>
+		<CraftedAmount>8</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>AmpuleMK1</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<ResearchRequirements>
+			<Research>Rooms_Herb</Research>
+		</ResearchRequirements>
+		
+		<Description></Description>
+		<Hint></Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.AmpuleUncraft2</Key>
+		<Category>consumables</Category>
+		<Tier>1</Tier>
+		<CraftedKey>Seed_UnderGrump</CraftedKey>
+		<CraftedAmount>16</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>AmpuleMK2</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<ResearchRequirements>
+			<Research>Rooms_Herb</Research>
+		</ResearchRequirements>
+		
+		<Description></Description>
+		<Hint></Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.AmpuleUncraft3</Key>
+		<Category>consumables</Category>
+		<Tier>1</Tier>
+		<CraftedKey>Seed_UnderGrump</CraftedKey>
+		<CraftedAmount>24</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>AmpuleMK3</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<ResearchRequirements>
+			<Research>Rooms_Herb</Research>
+		</ResearchRequirements>
+		
+		<Description></Description>
+		<Hint></Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.AmpuleUncraft4</Key>
+		<Category>consumables</Category>
+		<Tier>1</Tier>
+		<CraftedKey>Seed_UnderGrump</CraftedKey>
+		<CraftedAmount>32</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>AmpuleMK4</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<ResearchRequirements>
+			<Research>Rooms_Herb</Research>
+		</ResearchRequirements>
+		
+		<Description></Description>
+		<Hint></Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.LogiFalcorDowngrade</Key>
+		<Category>consumables</Category>
+		<Tier>1</Tier>
+		<CraftedKey>MadVandal.FTNTransitFALCORMK1_Key</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>MadVandal.FTNTransitFALCORMK2_Key</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<ResearchRequirements>
+		</ResearchRequirements>
+		
+		<Description></Description>
+		<Hint></Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.GeothermalGeneratorPlacementMan</Key>
+		<Category>powergeneration</Category>
+		<Tier>4</Tier>
+		<CraftedKey>GeothermalGeneratorPlacement</CraftedKey>
+		<CraftedAmount>5</CraftedAmount>
+		
+		<Costs>
+			<CraftCost><!-- This is post-casting, so the costs are WAY higher-->
+				<Key>HiemalMachineBlock</Key>
+				<Amount>90</Amount>
+			</CraftCost>
+			<!-- Remove this and add it as a recipe for the pipe itself?-->
+			<CraftCost>
+				<Key>RefinedLiquidResin</Key>
+				<Amount>64</Amount>
+			</CraftCost>
+			<CraftCost>
+				<Key>OverclockedCrystalClock</Key><!-- You're RIGHT BY a number of these deposits!-->
+				<Amount>20</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<ResearchRequirements>
+			<Research>T4_GTPower</Research>
+		</ResearchRequirements>
+		
+		<ResearchCost>8</ResearchCost>
+		<Description>Geothermal Power. Place in a cold area, and feed with Heat Conductant Pipes. Build in a 5x3x5 configuration. (75 total)</Description>
+		<Hint>Makes a lot of power.</Hint>
+	</CraftData>
+	<CraftData>
+		<Key>CargoLiftImproved</Key>
+		<Category>logistics</Category>
+		<Tier>1</Tier>
+		<CraftedKey>CargoLiftImproved</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>CargoLiftBasic</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+			<CraftCost>
+				<Key>AlloyedPCB</Key>
+				<Amount>10</Amount>
+			</CraftCost>
+			<CraftCost>
+				<Key>BasicMinecart</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+			<CraftCost>
+				<Key>UltimatePCB</Key>
+				<Amount>1</Amount>
+				<Delete>true</Delete>
+			</CraftCost>
+		</Costs>
+		<ResearchRequirements>
+			<Research>CargoLift2</Research>
+			<Research>orbitalpower</Research>
+		</ResearchRequirements>
+		<Description>1000 capacity lift with a maximum speed of 10 metres per second. Deploy in a Cargo Lift Controller.</Description>
+		<Hint>Can be upgraded again.</Hint>
+		<IsOverride>true</IsOverride>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.AblatorToLiquifierConvert</Key>
+		<Category>manufacturing</Category>
+		<Tier>3</Tier>
+		<CraftedKey>LaserResinLiquifier</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>LaserResinAblator</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>		
+		<ResearchRequirements>
+			<Research>ResinHandling</Research>
+		</ResearchRequirements>		
+		<Description>Uses large amounts of energy to access the soft core of a Hardened Resin block, once it's been Ablated. Attach to a storage hopper.</Description>
+		<Hint>Excellent for clearing out dead hiveminds for useful material.</Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.LiquifierToRefinerConvert</Key>
+		<Category>manufacturing</Category>
+		<Tier>3</Tier>
+		<CraftedKey>LiquidResinRefiner</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>LaserResinLiquifier</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>		
+		<ResearchRequirements>
+			<Research>ResinHandling</Research>
+		</ResearchRequirements>		
+		<Description>Converts Liquid Resin into the extremely useful Refined Liquid Resin.</Description>
+		<Hint>Used in a number of high-end organic recipes.</Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.RefinerToAblatorConvert</Key>
+		<Category>manufacturing</Category>
+		<Tier>3</Tier>
+		<CraftedKey>LaserResinAblator</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>LiquidResinRefiner</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>		
+		<ResearchRequirements>
+			<Research>ResinHandling</Research>
+		</ResearchRequirements>		
+		<Description>Uses large amounts of energy to Ablate the surface of Hardened Resin, allowing it to be liquified and then refined.</Description>
+		<Hint>Excellent for clearing out dead hiveminds for useful material.</Hint>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.AirlockConvertInOut</Key>
+		<Category>Rooms</Category>
+		<Tier>1</Tier>
+		<CraftedKey>AirLock_Inner_Placement</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>AirLock_Outer_Placement</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>Connects Rooms to Airlocks</Description>
+		<Hint>Build in a 3x3x1 or 1x3x3 layout</Hint>
+		<ResearchRequirements>
+		  <Research>Rooms_1</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.AirlockConvertOutIn</Key>
+		<Category>Rooms</Category>
+		<Tier>1</Tier>
+		<CraftedKey>AirLock_Outer_Placement</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>AirLock_Inner_Placement</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>Connects Airlocks to the Outside</Description>
+		<Hint>Build in a 3x3x1 or 1x3x3 layout</Hint>
+		<ResearchRequirements>
+		  <Research>Rooms_1</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.PodToCircuit</Key>
+		<Category>manufacturing</Category>
+		<Tier>0</Tier>
+		<CraftedKey>PrimaryPCB</CraftedKey>
+		<CraftedAmount>8</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>SimplifiedExperimentalPod</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>A way to use up leftover research pods.</Description>
+		<Hint>These are used extensively, and it is highly recommended you automate these!</Hint>
+		<ResearchRequirements>
+		  <Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.PodToWire</Key>
+		<Category>manufacturing</Category>
+		<Tier>0</Tier>
+		<CraftedKey>CopperWire</CraftedKey>
+		<CraftedAmount>8</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>BasicExperimentalPod</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>A way to use up leftover research pods.</Description>
+		<Hint>These are used extensively, and it is highly recommended you automate these!</Hint>
+		<ResearchRequirements>
+		  <Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.PodToPlate</Key>
+		<Category>manufacturing</Category>
+		<Tier>0</Tier>
+		<CraftedKey>IronPlate</CraftedKey>
+		<CraftedAmount>8</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>IntermediateExperimentalPod</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>A way to use up leftover research pods.</Description>
+		<Hint>These are used extensively, and it is highly recommended you automate these!</Hint>
+		<ResearchRequirements>
+		  <Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.PodToCoil</Key>
+		<Category>manufacturing</Category>
+		<Tier>0</Tier>
+		<CraftedKey>LithiumCoil</CraftedKey>
+		<CraftedAmount>8</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>ComplexExperimentalPod</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>A way to use up leftover research pods.</Description>
+		<Hint>These are used extensively, and it is highly recommended you automate these!</Hint>
+		<ResearchRequirements>
+		  <Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.PodToAlloyed</Key>
+		<Category>manufacturing</Category>
+		<Tier>0</Tier>
+		<CraftedKey>AlloyedMachineBlock</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>UltimateExperimentalPod</Key>
+				<Amount>2</Amount>
+			</CraftCost>
+			<CraftCost>
+				<Key>AdvancedExperimentalPod</Key>
+				<Amount>2</Amount>
+			</CraftCost>
+      <CraftCost>
+				<Key>XLExperimentalPod</Key>
+				<Amount>2</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>A way to use up leftover research pods.</Description>
+		<Hint>These are used extensively, and it is highly recommended you automate these!</Hint>
+		<ResearchRequirements>
+		  <Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+</ArrayOfCraftData>	
