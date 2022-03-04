@@ -1,17 +1,10 @@
-﻿/*
- * Created by SharpDevelop.
- * User: Reika
- * Date: 11/02/2022
- * Time: 6:01 PM
- * 
- * To change this template use Tools | Options | Coding | Edit Standard Headers.
- */
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 using System.Xml;
+using ReikaKalseki.FortressCore;
 
 namespace ReikaKalseki.FortressTweaks
 {
@@ -30,7 +23,7 @@ namespace ReikaKalseki.FortressTweaks
 			string path = System.IO.Path.Combine(folder, System.Environment.UserName+"_"+FILENAME);
 			if (System.IO.File.Exists(path))
 			{
-				Util.log("Loading config file at "+path);
+				FUtil.log("Loading config file at "+path);
 				try
 				{
 					XmlDocument doc = new XmlDocument();
@@ -48,25 +41,25 @@ namespace ReikaKalseki.FortressTweaks
 							float raw = entry.parse(val.InnerText);
 							float get = raw;
 							if (!entry.validate(ref get)) {
-								Util.log("Chosen "+name+" value ("+raw+") was out of bounds, clamed to "+get);
+								FUtil.log("Chosen "+name+" value ("+raw+") was out of bounds, clamed to "+get);
 							}
 							data[name] = get;
 						}
 						catch (Exception ex)
 						{
-							Util.log("Config entry "+name+" failed to load: "+ex.ToString());
+							FUtil.log("Config entry "+name+" failed to load: "+ex.ToString());
 						}
 					}
 					string vals = string.Join(";", data.Select(x => x.Key + "=" + x.Value).ToArray());
-					Util.log("Config successfully loaded: "+vals);
+					FUtil.log("Config successfully loaded: "+vals);
 				}
 				catch (Exception ex)
 				{
-					Util.log("Config failed to load: "+ex.ToString());
+					FUtil.log("Config failed to load: "+ex.ToString());
 				}
 			}
 			else {
-				Util.log("Config file does not exist at "+path+"; generating.");
+				FUtil.log("Config file does not exist at "+path+"; generating.");
 				try
 				{
 					XmlDocument doc = new XmlDocument();
@@ -76,11 +69,11 @@ namespace ReikaKalseki.FortressTweaks
 						createNode(doc, root, key);
 					}
 					doc.Save(path);
-					Util.log("Default config successfully generated.");
+					FUtil.log("Default config successfully generated.");
 				}
 				catch (Exception ex)
 				{
-					Util.log("Config failed to generate: "+ex.ToString());
+					FUtil.log("Config failed to generate: "+ex.ToString());
 				}
 			}
 		}

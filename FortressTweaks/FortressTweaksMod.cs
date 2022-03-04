@@ -6,6 +6,7 @@ using System.Linq;   //More advanced manipulation of lists/collections
 using System.Threading;
 using Harmony;
 using ReikaKalseki.FortressTweaks;
+using ReikaKalseki.FortressCore;
 
 namespace ReikaKalseki.FortressTweaks
 {
@@ -35,7 +36,7 @@ namespace ReikaKalseki.FortressTweaks
         var harmony = HarmonyInstance.Create("ReikaKalseki.FortressTweaks");
         HarmonyInstance.DEBUG = true;
         FileLog.Log("Ran mod register, started harmony (harmony log)");
-        Util.log("Ran mod register, started harmony");
+        FUtil.log("Ran mod register, started harmony");
         
         try {
 			harmony.PatchAll();
@@ -53,27 +54,27 @@ namespace ReikaKalseki.FortressTweaks
         //CubeHelper.mabIsCubeTypeGlass[eCubeTypes.CastingPipe] = true;
         //CubeHelper.mabIsCubeTypeGlass[eCubeTypes.T4_GenericPipe] = true;
         
-        FreightCartMob.OreFreighterWithdrawalPerTick = 40; //base is 5, barely better than minecarts; was 25 here until 2022
+        FreightCartMob.OreFreighterWithdrawalPerTick = config.getInt(Config.ConfigEntries.FREIGHT_SPEED); //base is 5, barely better than minecarts; was 25 here until 2022
         
-        T3_FuelCompressor.MAX_HIGHOCTANE = 10;
+        T3_FuelCompressor.MAX_HIGHOCTANE = config.getInt(Config.ConfigEntries.HOF_CACHE);
         
-        foreach (CraftData rec in Util.getRecipesFor("ForcedInductionMK5")) {
-        	Util.modifyIngredientCount(rec, "ForcedInductionMK4", (uint)config.getInt(Config.ConfigEntries.FI_5_COST4)); //was 8
+        foreach (CraftData rec in RecipeUtil.getRecipesFor("ForcedInductionMK5")) {
+        	RecipeUtil.modifyIngredientCount(rec, "ForcedInductionMK4", (uint)config.getInt(Config.ConfigEntries.FI_5_COST4)); //was 8
         }
         
         if (config.getBoolean(Config.ConfigEntries.CHEAP_ARC)) {
-	        foreach (CraftData rec in Util.getRecipesFor("ForcedInductionMK6")) { //ARC upgrade
-	        	Util.modifyIngredientCount(rec, "AlloyedMachineBlock", 16); //was 512
-	        	Util.modifyIngredientCount(rec, "PowerBoosterMK5", 5); //was 2
+	        foreach (CraftData rec in RecipeUtil.getRecipesFor("ForcedInductionMK6")) { //ARC upgrade
+	        	RecipeUtil.modifyIngredientCount(rec, "AlloyedMachineBlock", 16); //was 512
+	        	RecipeUtil.modifyIngredientCount(rec, "PowerBoosterMK5", 5); //was 2
 	        }
         }
         
         if (config.getBoolean(Config.ConfigEntries.EARLIER_V3_GUN)) {
-	        foreach (CraftData rec in Util.getRecipesFor("BuildGunV3")) {
-	        	Util.modifyIngredientCount(rec, "MolybdenumBar", 256); //was 1024
-	        	Util.modifyIngredientCount(rec, "ChromiumBar", 256); //was 1024
-	        	Util.removeResearch(rec, "T4_MagmaBore");
-	        	Util.addResearch(rec, "T4_drills_2");
+	        foreach (CraftData rec in RecipeUtil.getRecipesFor("BuildGunV3")) {
+	        	RecipeUtil.modifyIngredientCount(rec, "MolybdenumBar", 256); //was 1024
+	        	RecipeUtil.modifyIngredientCount(rec, "ChromiumBar", 256); //was 1024
+	        	RecipeUtil.removeResearch(rec, "T4_MagmaBore");
+	        	RecipeUtil.addResearch(rec, "T4_drills_2");
 	        }
         }
         
