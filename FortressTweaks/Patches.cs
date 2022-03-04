@@ -264,6 +264,8 @@ namespace ReikaKalseki.FortressTweaks {
 		
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			if (!FortressTweaksMod.config.getBoolean(Config.ConfigEntries.FALCOR_SKY))
+				return codes.AsEnumerable();
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				for (int i = 0; i < codes.Count; i++) {
@@ -325,6 +327,8 @@ namespace ReikaKalseki.FortressTweaks {
 		
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			if (!FortressTweaksMod.config.getBoolean(Config.ConfigEntries.ITEM_DESPAWN))
+				return codes.AsEnumerable();
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				for (int i = 0; i < codes.Count; i++) {
@@ -521,6 +525,8 @@ namespace ReikaKalseki.FortressTweaks {
 		
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			if (!FortressTweaksMod.config.getBoolean(Config.ConfigEntries.WORM_REVEAL))
+				return codes.AsEnumerable();
 			try {
 				for (int i = 0; i < codes.Count; i++) {
 					CodeInstruction ci = codes[i];
@@ -581,6 +587,7 @@ namespace ReikaKalseki.FortressTweaks {
 		
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			int through = FortressTweaksMod.config.getInt(Config.ConfigEntries.CONDUIT_SPEED);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				for (int i = 0; i < codes.Count; i++) {
@@ -588,7 +595,7 @@ namespace ReikaKalseki.FortressTweaks {
 					if (ci.opcode == OpCodes.Stfld) {
 						FieldInfo fi = (FieldInfo)ci.operand;
 						if (fi.Name == "mrMaxPower" || fi.Name == "mrMaxTransferRate" || fi.Name == "mrMaxTransferRateOut") {
-							codes[i-1].operand = 65536F;
+							codes[i-1].operand = through;
 						}
 					}
 				}
@@ -610,6 +617,7 @@ namespace ReikaKalseki.FortressTweaks {
 		
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			int through = FortressTweaksMod.config.getInt(Config.ConfigEntries.INDUCTION_CAP);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				for (int i = 0; i < codes.Count; i++) {
@@ -617,7 +625,7 @@ namespace ReikaKalseki.FortressTweaks {
 					if (ci.opcode == OpCodes.Stfld) {
 						FieldInfo fi = (FieldInfo)ci.operand;
 						if (fi.Name == "mrMaxPower" || fi.Name == "mrMaxTransferRate") {
-							codes[i-1].operand = fi.Name == "mrMaxPower" ? 16384F : 65536F; //transfer +50% and storage 6.5x to fix the difficulty-based scaling
+							codes[i-1].operand = fi.Name == "mrMaxPower" ? through/4F : (float)through; //transfer +50% and storage 6.5x to fix the difficulty-based scaling
 						}
 					}
 				}
@@ -639,6 +647,8 @@ namespace ReikaKalseki.FortressTweaks {
 		
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			if (!FortressTweaksMod.config.getBoolean(Config.ConfigEntries.FREIGHT_BASIC_BOOST))
+				return codes.AsEnumerable();
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				for (int i = 0; i < codes.Count; i++) {
@@ -673,6 +683,8 @@ namespace ReikaKalseki.FortressTweaks {
 		
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			if (!FortressTweaksMod.config.getBoolean(Config.ConfigEntries.FREIGHT_BASIC_BOOST))
+				return codes.AsEnumerable();
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				for (int i = 0; i < codes.Count; i++) {
@@ -705,6 +717,8 @@ namespace ReikaKalseki.FortressTweaks {
 		
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			if (!FortressTweaksMod.config.getBoolean(Config.ConfigEntries.FREIGHT_BASIC_BOOST))
+				return codes.AsEnumerable();
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				for (int i = 0; i < codes.Count; i++) {
@@ -744,7 +758,7 @@ namespace ReikaKalseki.FortressTweaks {
 				for (int i = 0; i < codes.Count; i++) {
 					CodeInstruction ci = codes[i];
 					if (ci.opcode == OpCodes.Ldc_I4_S && ((sbyte)ci.operand) == 31) {
-						ci.operand = 96;
+						ci.operand = FortressTweaksMod.config.getInt(Config.ConfigEntries.CASTING_PIPE);
 						break;
 					}
 				}
@@ -809,10 +823,40 @@ namespace ReikaKalseki.FortressTweaks {
 						if (prev.opcode == OpCodes.Ldc_R4) {
 							float speed = (float)prev.operand;
 							if (Math.Abs(4-speed) <= 0.1) {
-								prev.operand = speed+idx;
+								prev.operand = FortressTweaksMod.config.getFloat(idx == 2 ? Config.ConfigEntries.FORCED_INDUCTION_5_SPEED : Config.ConfigEntries.FORCED_INDUCTION_4_SPEED);//speed+idx;
 								idx++; //after because it fires for mk3 at a speed of 4 too
 							}
 						}
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+
+	[HarmonyPatch(typeof(Player))]
+	[HarmonyPatch("LowFrequencyUpdate")]
+	public static class PlayerCollectionBooster {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				for (int i = 0; i < codes.Count; i++) {
+					CodeInstruction ci = codes[i];
+					if (ci.opcode == OpCodes.Callvirt && ((MethodInfo)ci.operand).Name == "UpdateCollection") {
+						ci.opcode = OpCodes.Call;
+						ci.operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "doPlayerItemCollection", false, new Type[]{typeof(Player), typeof(long), typeof(long), typeof(long), typeof(Vector3), typeof(float), typeof(float), typeof(float), typeof(int)});
+						CodeInstruction ldself = new CodeInstruction(OpCodes.Ldarg_0);
+						codes.Insert(i, ldself);
+						break;
 					}
 				}
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);

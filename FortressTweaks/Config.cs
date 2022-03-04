@@ -18,7 +18,7 @@ namespace ReikaKalseki.FortressTweaks
 	public class Config
 	{
 		private static readonly string FILENAME = "FortressTweaks_Config.xml";
-		private readonly Dictionary<string, string> data = new Dictionary<string, string>();
+		private readonly Dictionary<string, float> data = new Dictionary<string, float>();
 		
 		public Config()
 		{
@@ -27,7 +27,7 @@ namespace ReikaKalseki.FortressTweaks
 		
 		public void load() {
 			string folder = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-			string path = System.IO.Path.Combine(folder, FILENAME);
+			string path = System.IO.Path.Combine(folder, System.Environment.UserName+"_"+FILENAME);
 			if (System.IO.File.Exists(path))
 			{
 				Util.log("Loading config file at "+path);
@@ -50,7 +50,7 @@ namespace ReikaKalseki.FortressTweaks
 							if (!entry.validate(ref get)) {
 								Util.log("Chosen "+name+" value ("+raw+") was out of bounds, clamed to "+get);
 							}
-							data[name] = get.ToString();
+							data[name] = get;
 						}
 						catch (Exception ex)
 						{
@@ -118,27 +118,22 @@ namespace ReikaKalseki.FortressTweaks
 			root.AppendChild(node);
 		}
 		
-		private string getString(string key) {
-			return data.ContainsKey(key) ? data[key] : null;
-		}
-		
-		public string getString(ConfigEntries key) {
-			return getString(Enum.GetName(typeof(ConfigEntries), key));
+		private float getValue(string key) {
+			return data.ContainsKey(key) ? data[key] : 0;
 		}
 		
 		public bool getBoolean(ConfigEntries key) {
-			string ret = getString(key);
-			return string.IsNullOrEmpty(ret) ? getEntry(key).defaultValue > 0 : ret.ToLowerInvariant() == "true";
+			float ret = getFloat(key);
+			return ret > 0.001;
 		}
 		
 		public int getInt(ConfigEntries key) {
-			string ret = getString(key);
-			return string.IsNullOrEmpty(ret) ? (int)getEntry(key).defaultValue : Int32.Parse(ret);
+			float ret = getFloat(key);
+			return (int)Math.Floor(ret);
 		}
 		
 		public float getFloat(ConfigEntries key) {
-			string ret = getString(key);
-			return string.IsNullOrEmpty(ret) ? getEntry(key).defaultValue : float.Parse(ret);
+			return getValue(Enum.GetName(typeof(ConfigEntries), key));
 		}
 		
 		public ConfigEntry getEntry(ConfigEntries key) {
@@ -157,8 +152,8 @@ namespace ReikaKalseki.FortressTweaks
 			[ConfigEntry("Enable post-overmind anti-worm OET strikes", true)]OET,
 			[ConfigEntry("Low-power anti-worm OET strike power cost", typeof(int), 2000000, 1, 100000000, 100000000)]OET_WEAK_COST,
 			[ConfigEntry("Make outer airlocks optional", false)]AIRLOCK,
-			[ConfigEntry("Mattermitter range reduction factor by tier", typeof(float), 1, 0, 1, 0.5F)]MATTERMITTER_RANGE_FACTOR,
-			[ConfigEntry("Mattermitter range flat reduction by tier", typeof(int), 16, 0, 64, 0)]MATTERMITTER_RANGE_DROP,
+			[ConfigEntry("Mattermitter range reduction factor by tier", typeof(float), 0.5F, 0, 1, 0.5F)]MATTERMITTER_RANGE_FACTOR,
+			[ConfigEntry("Mattermitter range flat reduction by tier", typeof(int), 0, 0, 64, 0)]MATTERMITTER_RANGE_DROP,
 			[ConfigEntry("Casting pipe max range", typeof(int), 96, 16, 256, 31)]CASTING_PIPE,
 			[ConfigEntry("Remove FALCOR beacon sky access requirement", true)]FALCOR_SKY,
 			[ConfigEntry("Disable item despawning", false)]ITEM_DESPAWN,
