@@ -12,9 +12,6 @@ using UnityEngine;
 
 namespace ReikaKalseki.FortressTweaks
 {
-	/// <summary>
-	/// Description of MusicReplacement.
-	/// </summary>
 	public class MusicReplacement
 	{	    
 		private static AudioMusicManager.eMusicSource currentPlaying;
@@ -81,7 +78,7 @@ namespace ReikaKalseki.FortressTweaks
 	        	return AudioMusicManager.eMusicSource.eUpperCave;
 	        }
 	        else if (SurvivalFogManager.GlobalDepth > BiomeLayer.CavernColdFloor) {
-	            if (CCCCC.ActiveAndWorking && false)
+	            if (CCCCC.ActiveAndWorking && !FortressTweaksMod.getConfig().getBoolean(FTConfig.ConfigEntries.FF_MUSIC))
 	                return AudioMusicManager.eMusicSource.eColdCavern_FF;
 	            else
 	                return AudioMusicManager.eMusicSource.eColdCavern;

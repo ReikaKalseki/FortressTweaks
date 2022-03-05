@@ -10,14 +10,20 @@ using ReikaKalseki.FortressCore;
 
 namespace ReikaKalseki.FortressTweaks
 {
-  public class FortressTweaksMod : FortressCraftMod
+  public class FortressTweaksMod : FCoreMod
   {
     public const string MOD_KEY = "ReikaKalseki.FortressTweaks";
     public const string CUBE_KEY = "ReikaKalseki.FortressTweaks_Key";
     
-    public static readonly Config config = new Config();
+    private static Config<FTConfig.ConfigEntries> config;
     
-    public static bool useMagmaMusicInFF = false;//CCCCC.ActiveAndWorking;
+    public FortressTweaksMod() : base("FortressTweaks") {
+    	config = new Config<FTConfig.ConfigEntries>(this);
+    }
+    
+    public static Config<FTConfig.ConfigEntries> getConfig() {
+    	return config;
+    }
 
     public override ModRegistrationData Register()
     {
@@ -54,22 +60,28 @@ namespace ReikaKalseki.FortressTweaks
         //CubeHelper.mabIsCubeTypeGlass[eCubeTypes.CastingPipe] = true;
         //CubeHelper.mabIsCubeTypeGlass[eCubeTypes.T4_GenericPipe] = true;
         
-        FreightCartMob.OreFreighterWithdrawalPerTick = config.getInt(Config.ConfigEntries.FREIGHT_SPEED); //base is 5, barely better than minecarts; was 25 here until 2022
+        FreightCartMob.OreFreighterWithdrawalPerTick = config.getInt(FTConfig.ConfigEntries.FREIGHT_SPEED); //base is 5, barely better than minecarts; was 25 here until 2022
         
-        T3_FuelCompressor.MAX_HIGHOCTANE = config.getInt(Config.ConfigEntries.HOF_CACHE);
+        T3_FuelCompressor.MAX_HIGHOCTANE = config.getInt(FTConfig.ConfigEntries.HOF_CACHE);
         
-        foreach (CraftData rec in RecipeUtil.getRecipesFor("ForcedInductionMK5")) {
-        	RecipeUtil.modifyIngredientCount(rec, "ForcedInductionMK4", (uint)config.getInt(Config.ConfigEntries.FI_5_COST4)); //was 8
+        applyRecipeChanges();
+        
+        return registrationData;
+    }
+    
+    private void applyRecipeChanges() {
+    	foreach (CraftData rec in RecipeUtil.getRecipesFor("ForcedInductionMK5")) {
+        	RecipeUtil.modifyIngredientCount(rec, "ForcedInductionMK4", (uint)config.getInt(FTConfig.ConfigEntries.FI_5_COST4)); //was 8
         }
         
-        if (config.getBoolean(Config.ConfigEntries.CHEAP_ARC)) {
+        if (config.getBoolean(FTConfig.ConfigEntries.CHEAP_ARC)) {
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("ForcedInductionMK6")) { //ARC upgrade
 	        	RecipeUtil.modifyIngredientCount(rec, "AlloyedMachineBlock", 16); //was 512
 	        	RecipeUtil.modifyIngredientCount(rec, "PowerBoosterMK5", 5); //was 2
 	        }
         }
         
-        if (config.getBoolean(Config.ConfigEntries.EARLIER_V3_GUN)) {
+        if (config.getBoolean(FTConfig.ConfigEntries.EARLIER_V3_GUN)) {
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("BuildGunV3")) {
 	        	RecipeUtil.modifyIngredientCount(rec, "MolybdenumBar", 256); //was 1024
 	        	RecipeUtil.modifyIngredientCount(rec, "ChromiumBar", 256); //was 1024
@@ -78,11 +90,47 @@ namespace ReikaKalseki.FortressTweaks
 	        }
         }
         
-        return registrationData;
+        if (config.getBoolean(FTConfig.ConfigEntries.AMPULEUNDO)) {
+        	for (int i = 1; i <= 5; i++) {
+        		CraftData rec = RecipeUtil.addRecipe("AmpuleUncraft"+i, "Seed_UnderGrump", 8*i);
+        		rec.Tier = 1;
+        		rec.CanCraftAnywhere = true;
+        		rec.Category = "consumables";
+        		rec.Description = "Uncrafting MK"+i+" ampules.";
+        		RecipeUtil.addIngredient(rec, "AmpuleMK"+i, 1);
+        		RecipeUtil.addResearch(rec, "Rooms_Herb");
+        	}
+        }
+        
+        if (config.getBoolean(FTConfig.ConfigEntries.T2LIFT)) {
+        	CraftData rec = RecipeUtil.getRecipeByKey("CargoLiftImproved");
+        	RecipeUtil.addIngredient(rec, "AlloyedPCB", 10);
+        	RecipeUtil.removeIngredient(rec, "UltimatePCB");
+        	rec.Hint = "Can be upgraded again.";
+        }
+        
+        if (config.getBoolean(FTConfig.ConfigEntries.GEOHEIM)) {
+        		CraftData template = RecipeUtil.getRecipeByKey("GeothermalGeneratorPlacementMan");
+				CraftData rec = RecipeUtil.copyRecipe(template);
+        		RecipeUtil.removeIngredient(rec, "ChromedMachineBlock");
+        		CraftCost ing = RecipeUtil.removeIngredient(rec, "MagneticMachineBlock");
+        		RecipeUtil.addIngredient(rec, "HiemalMachineBlock", ing.Amount*9/10);
+        }
+        
+        if (config.getBoolean(FTConfig.ConfigEntries.PODUNCRAFT)) {
+			string folder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+			string path = System.IO.Path.Combine(folder, "Xml/PodUncrafting.xml");
+        	List<OverrideCraftData> li = (List<OverrideCraftData>)XMLParser.ReadXML(path, typeof(List<OverrideCraftData>));
+        	foreach (OverrideCraftData data in li) {
+        		CraftData rec = data.ToStandardFormat();
+        		CraftData.mRecipesForSet["Manufacturer"].Add(rec);
+        		FUtil.log("Adding pod uncrafting recipe "+RecipeUtil.recipeToString(rec));
+        	}
+        }
     }
     
     public static float getMagmaborePowerCost(float orig, T4_MagmaBore bore) {
-    	if (!config.getBoolean(Config.ConfigEntries.MAGMABORE))
+    	if (!config.getBoolean(FTConfig.ConfigEntries.MAGMABORE))
     		return orig;
     	float ret = orig;
     	if (DifficultySettings.mbEasyPower)
@@ -97,7 +145,7 @@ namespace ReikaKalseki.FortressTweaks
     }
     
     public static float getCompressorSpeed(float orig, T4_ParticleCompressor filter) {
-    	if (!config.getBoolean(Config.ConfigEntries.GAS_SPEED))
+    	if (!config.getBoolean(FTConfig.ConfigEntries.GAS_SPEED))
     		return orig;
     	float f = filter.mrCurrentPower/filter.mrMaxPower;
     	if (f < 0.5) {
@@ -108,7 +156,7 @@ namespace ReikaKalseki.FortressTweaks
     }
     
     public static int getProducedGas(int orig, T4_ParticleFilter filter) {
-    	if (!config.getBoolean(Config.ConfigEntries.GAS_SPEED))
+    	if (!config.getBoolean(FTConfig.ConfigEntries.GAS_SPEED))
     		return orig;
     	float f = filter.mrCurrentPower/filter.mrMaxPower;
     	if (f < 0.5) {
@@ -121,11 +169,11 @@ namespace ReikaKalseki.FortressTweaks
     }
     
     public static bool isCubeGeoPassable(ushort ID, GeothermalGenerator gen) {
-    	return ID == eCubeTypes.Magma || ID == eCubeTypes.MagmaFluid || (config.getBoolean(Config.ConfigEntries.GEO_PIPE_PASS) && (ID == eCubeTypes.Magmacite || (CubeHelper.IsOre(ID) && gen.mShaftEndY < -1000)));
+    	return ID == eCubeTypes.Magma || ID == eCubeTypes.MagmaFluid || (config.getBoolean(FTConfig.ConfigEntries.GEO_PIPE_PASS) && (ID == eCubeTypes.Magmacite || (CubeHelper.IsOre(ID) && gen.mShaftEndY < -1000)));
     }
     
     public static float getGrappleCooldown(float orig) {
-    	return PlayerInventory.mbPlayerHasMK3BuildGun && config.getBoolean(Config.ConfigEntries.GRAPPLE_COOLDOWN) ? Math.Min(orig, 0.2F) : orig;
+    	return PlayerInventory.mbPlayerHasMK3BuildGun && config.getBoolean(FTConfig.ConfigEntries.GRAPPLE_COOLDOWN) ? Math.Min(orig, 0.2F) : orig;
     }
     
     public static bool isCubeGlassForRoom(ushort blockID, RoomController rc) {
@@ -137,7 +185,7 @@ namespace ReikaKalseki.FortressTweaks
     public static float getSharedPSBPower(float orig, PowerStorageBlock from, PowerStorageBlock to) {
     	float max = Math.Min(from.mrCurrentPower, to.mrPowerSpareCapacity);
     	float buff = from.mrMaxPower/to.mrMaxPower; //eg 1500/200 = 7.5x for blue/green, 5000/1500 = 3.33x purple/blue, 5000/200 = 25x purple/green
-    	buff *= config.getFloat(Config.ConfigEntries.PSB_SHARE);
+    	buff *= config.getFloat(FTConfig.ConfigEntries.PSB_SHARE);
     	return Math.Min(max*0.8F, (float)Math.Round(orig*Math.Max(1, buff/2.5F))); //max flow rate: blue/green from 40 to 120, purple/blue from 300 to 400, purple/green from 40 to 160
     }
     
@@ -169,36 +217,36 @@ namespace ReikaKalseki.FortressTweaks
     }
     
     public static void updateOETRequiredCharge() {
-    	if (!MobSpawnManager.mbSurfaceAttacksActive && config.getBoolean(Config.ConfigEntries.OET)) {
-    		OrbitalEnergyTransmitter.mrMaxPower = Math.Min(OrbitalEnergyTransmitter.mrMaxPower, config.getInt(Config.ConfigEntries.OET_WEAK_COST));
+    	if (!MobSpawnManager.mbSurfaceAttacksActive && config.getBoolean(FTConfig.ConfigEntries.OET)) {
+    		OrbitalEnergyTransmitter.mrMaxPower = Math.Min(OrbitalEnergyTransmitter.mrMaxPower, config.getInt(FTConfig.ConfigEntries.OET_WEAK_COST));
     	}
     }
     
     public static bool deleteOET(WorldScript world, Segment segment, long x, long y, long z, ushort leType)
     {
-    	if (!MobSpawnManager.mbSurfaceAttacksActive && config.getBoolean(Config.ConfigEntries.OET)) {
+    	if (!MobSpawnManager.mbSurfaceAttacksActive && config.getBoolean(FTConfig.ConfigEntries.OET)) {
     		return true;
     	}
         return world.BuildFromEntity(segment,x,y,z,leType);
     }
     
     public static void guaranteeAirlock(Room_Airlock air) {
-    	if (air.LinkedAirLock == null && config.getBoolean(Config.ConfigEntries.AIRLOCK)) {
+    	if (air.LinkedAirLock == null && config.getBoolean(FTConfig.ConfigEntries.AIRLOCK)) {
     		air.LinkedAirLock = air;
     		//Debug.Log("Airlock not found @ "+air.mnX+" / "+air.mnY+" / "+air.mnZ+", linking to self");
     	}
     }
     
     public static Room_Airlock guaranteeAirlockDuringCheck(Room_Airlock air) {
-    	if (config.getBoolean(Config.ConfigEntries.AIRLOCK))
+    	if (config.getBoolean(FTConfig.ConfigEntries.AIRLOCK))
 	    	guaranteeAirlock(air);
 		return air.LinkedAirLock;
     }
     
     public static void setMMRange(MatterMover mm) {
     	int tier = mm.mValue;
-    	int drop = config.getInt(Config.ConfigEntries.MATTERMITTER_RANGE_DROP);
-    	float scale = config.getFloat(Config.ConfigEntries.MATTERMITTER_RANGE_FACTOR);
+    	int drop = config.getInt(FTConfig.ConfigEntries.MATTERMITTER_RANGE_DROP);
+    	float scale = config.getFloat(FTConfig.ConfigEntries.MATTERMITTER_RANGE_FACTOR);
     	double fac = Math.Abs(scale-1) <= 0.01 ? 1 : Math.Pow(scale, tier);
     	int range = (int)(64*fac-tier*drop);
     	mm.mnMaxTransmitDistance = range;
@@ -206,7 +254,7 @@ namespace ReikaKalseki.FortressTweaks
     
     public static float progressGACTimer(float prevTimerValue, float step, GenericAutoCrafterNew gac) {
     	float pf = gac.mrCurrentPower/gac.mrMaxPower;
-    	float speed = gac.mrMaxPower <= 0 || float.IsInfinity(pf) || float.IsNaN(pf) ? 1 : Math.Max(1, (pf-0.5F)*4*config.getFloat(Config.ConfigEntries.GAC_RAMP));
+    	float speed = gac.mrMaxPower <= 0 || float.IsInfinity(pf) || float.IsNaN(pf) ? 1 : Math.Max(1, (pf-0.5F)*4*config.getFloat(FTConfig.ConfigEntries.GAC_RAMP));
     	return Math.Max(0, prevTimerValue-step*speed);
     }
     
@@ -221,7 +269,7 @@ namespace ReikaKalseki.FortressTweaks
     }
     
     public static bool doOETBlockEffects(WorldScript world, long x0, long y0, long z0, int size, int hardness) {
-    	if (MobSpawnManager.mbSurfaceAttacksActive || !config.getBoolean(Config.ConfigEntries.OET)) {
+    	if (MobSpawnManager.mbSurfaceAttacksActive || !config.getBoolean(FTConfig.ConfigEntries.OET)) {
     	//	WorldScript.instance.Explode(x0, y0, z0, size, hardness);
     		return WorldScript.instance.SafeExplode(x0, y0, z0, size);
     	}

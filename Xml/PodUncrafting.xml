@@ -1,0 +1,110 @@
+<ArrayOfCraftData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<CraftData>
+		<Key>ReikaKalseki.PodToCircuit</Key>
+		<Category>manufacturing</Category>
+		<Tier>0</Tier>
+		<CraftedKey>PrimaryPCB</CraftedKey>
+		<CraftedAmount>8</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>SimplifiedExperimentalPod</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>A way to use up leftover research pods.</Description>
+		<Hint>These are used extensively, and it is highly recommended you automate these!</Hint>
+		<ResearchRequirements>
+		  <Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.PodToWire</Key>
+		<Category>manufacturing</Category>
+		<Tier>0</Tier>
+		<CraftedKey>CopperWire</CraftedKey>
+		<CraftedAmount>8</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>BasicExperimentalPod</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>A way to use up leftover research pods.</Description>
+		<Hint>These are used extensively, and it is highly recommended you automate these!</Hint>
+		<ResearchRequirements>
+		  <Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.PodToPlate</Key>
+		<Category>manufacturing</Category>
+		<Tier>0</Tier>
+		<CraftedKey>IronPlate</CraftedKey>
+		<CraftedAmount>8</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>IntermediateExperimentalPod</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>A way to use up leftover research pods.</Description>
+		<Hint>These are used extensively, and it is highly recommended you automate these!</Hint>
+		<ResearchRequirements>
+		  <Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.PodToCoil</Key>
+		<Category>manufacturing</Category>
+		<Tier>0</Tier>
+		<CraftedKey>LithiumCoil</CraftedKey>
+		<CraftedAmount>8</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>ComplexExperimentalPod</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>A way to use up leftover research pods.</Description>
+		<Hint>These are used extensively, and it is highly recommended you automate these!</Hint>
+		<ResearchRequirements>
+		  <Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.PodToAlloyed</Key>
+		<Category>manufacturing</Category>
+		<Tier>0</Tier>
+		<CraftedKey>AlloyedMachineBlock</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>UltimateExperimentalPod</Key>
+				<Amount>2</Amount>
+			</CraftCost>
+			<CraftCost>
+				<Key>AdvancedExperimentalPod</Key>
+				<Amount>2</Amount>
+			</CraftCost>
+      <CraftCost>
+				<Key>XLExperimentalPod</Key>
+				<Amount>2</Amount>
+			</CraftCost>
+		</Costs>
+		
+		<Description>A way to use up leftover research pods.</Description>
+		<Hint>These are used extensively, and it is highly recommended you automate these!</Hint>
+		<ResearchRequirements>
+		  <Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
+</ArrayOfCraftData>	
