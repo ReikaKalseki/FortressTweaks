@@ -45,7 +45,7 @@ namespace ReikaKalseki.FortressTweaks
         FUtil.log("Ran mod register, started harmony");
         
         try {
-			harmony.PatchAll();
+			harmony.PatchAll(System.Reflection.Assembly.GetExecutingAssembly());
         }
         catch (Exception e) {
 			FileLog.Log("Caught exception when running patcher!");
@@ -53,6 +53,7 @@ namespace ReikaKalseki.FortressTweaks
 			FileLog.Log(e.StackTrace);
 			FileLog.Log(e.ToString());
         }        
+        FUtil.log("Harmony patches complete.");
         
         CubeHelper.mabIsCubeTypeGlass[eCubeTypes.EnergyGrommet] = true;
         CubeHelper.mabIsCubeTypeGlass[eCubeTypes.LogisticsGrommet] = true;
@@ -63,6 +64,8 @@ namespace ReikaKalseki.FortressTweaks
         FreightCartMob.OreFreighterWithdrawalPerTick = config.getInt(FTConfig.ConfigEntries.FREIGHT_SPEED); //base is 5, barely better than minecarts; was 25 here until 2022
         
         T3_FuelCompressor.MAX_HIGHOCTANE = config.getInt(FTConfig.ConfigEntries.HOF_CACHE);
+        
+        UIManager.instance.mSuitPanel.ValidItems.Add(ItemEntry.mEntriesByKey["ReikaKalseki.ItemMagnet"].ItemID);
         
         applyRecipeChanges();
         
@@ -92,14 +95,20 @@ namespace ReikaKalseki.FortressTweaks
         
         if (config.getBoolean(FTConfig.ConfigEntries.AMPULEUNDO)) {
         	for (int i = 1; i <= 5; i++) {
-        		CraftData rec = RecipeUtil.addRecipe("AmpuleUncraft"+i, "Seed_UnderGrump", 8*i);
+        		CraftData rec = RecipeUtil.addRecipe("AmpuleUncraft"+i, "Seed_UnderGrump", "consumables", 8*i);
         		rec.Tier = 1;
         		rec.CanCraftAnywhere = true;
-        		rec.Category = "consumables";
         		rec.Description = "Uncrafting MK"+i+" ampules.";
         		RecipeUtil.addIngredient(rec, "AmpuleMK"+i, 1);
         		RecipeUtil.addResearch(rec, "Rooms_Herb");
         	}
+        }
+        
+    	int braincost = config.getInt(FTConfig.ConfigEntries.HIVE_BRAIN);
+        if (braincost > 0) {
+        	CraftData rec = RecipeUtil.addRecipe("RecombinedBrain", "HiveBrainMatter", "CraftingIngredient", 1);
+        	rec.CanCraftAnywhere = true;
+        	RecipeUtil.addIngredient(rec, "RecombinedOrganicMatter", (uint)braincost);
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.T2LIFT)) {
@@ -110,11 +119,13 @@ namespace ReikaKalseki.FortressTweaks
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.GEOHEIM)) {
-        		CraftData template = RecipeUtil.getRecipeByKey("GeothermalGeneratorPlacementMan");
-				CraftData rec = RecipeUtil.copyRecipe(template);
-        		RecipeUtil.removeIngredient(rec, "ChromedMachineBlock");
-        		CraftCost ing = RecipeUtil.removeIngredient(rec, "MagneticMachineBlock");
-        		RecipeUtil.addIngredient(rec, "HiemalMachineBlock", ing.Amount*9/10);
+        	CraftData template = RecipeUtil.getRecipeByKey("GeothermalGeneratorPlacementMan");
+			CraftData rec = RecipeUtil.copyRecipe(template);
+			rec.Key = "ReikaKalseki.GeothermalGeneratorPlacementMan";
+			RecipeUtil.addRecipe(rec);
+        	RecipeUtil.removeIngredient(rec, "ChromedMachineBlock");
+        	CraftCost ing = RecipeUtil.removeIngredient(rec, "MagneticMachineBlock");
+        	RecipeUtil.addIngredient(rec, "HiemalMachineBlock", ing.Amount*9/10);
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.PODUNCRAFT)) {
@@ -123,7 +134,7 @@ namespace ReikaKalseki.FortressTweaks
         	List<OverrideCraftData> li = (List<OverrideCraftData>)XMLParser.ReadXML(path, typeof(List<OverrideCraftData>));
         	foreach (OverrideCraftData data in li) {
         		CraftData rec = data.ToStandardFormat();
-        		CraftData.mRecipesForSet["Manufacturer"].Add(rec);
+				RecipeUtil.addRecipe(rec);
         		FUtil.log("Adding pod uncrafting recipe "+RecipeUtil.recipeToString(rec));
         	}
         }
@@ -258,13 +269,17 @@ namespace ReikaKalseki.FortressTweaks
     	return Math.Max(0, prevTimerValue-step*speed);
     }
     
-    public static DroppedItemData doPlayerItemCollection(Player p, long x, long y, long z, Vector3 off, float magRange, float magStrength, float range, int maxStack) {
+    public static DroppedItemData doPlayerItemCollection(ItemManager mgr, long x, long y, long z, Vector3 off, float magRange, float magStrength, float range, int maxStack, Player p) {
     	PlayerInventory inv = p.mInventory;
     	int id = ItemEntry.GetIDFromKey("ReikaKalseki.ItemMagnet", true);
-		if (id > 0 && inv.GetSuitAndInventoryItemCount(id) > 0) { //TODO cache this for performance
+    	//FUtil.log("Has magnet "+id+" : "+inv.GetSuitAndInventoryItemCount(id));
+    	float pwr = config.getFloat(FTConfig.ConfigEntries.MAGNET_COST);
+		if (SurvivalPowerPanel.mrSuitPower >= pwr && id > 0 && inv.GetSuitAndInventoryItemCount(id) > 0) { //TODO cache this for performance
     		range *= 6;
+    		magRange *= 6;
+    		SurvivalPowerPanel.mrSuitPower -= pwr;
 		}
-    	DroppedItemData droppedItem = ItemManager.instance.UpdateCollection(x, y, z, off, magRange, magStrength, range, maxStack);
+    	DroppedItemData droppedItem = mgr.UpdateCollection(x, y, z, off, magRange, magStrength, range, maxStack);
     	return droppedItem;
     }
     

@@ -20,9 +20,11 @@ namespace ReikaKalseki.FortressTweaks
 			[ConfigEntry("PSB sharing boost from large to small", typeof(float), 1, 0, 10, 0)]PSB_SHARE,
 			[ConfigEntry("Enable post-overmind anti-worm OET strikes", true)]OET,
 			[ConfigEntry("Low-power anti-worm OET strike power cost", typeof(int), 2000000, 1, 100000000, 100000000)]OET_WEAK_COST,
-			[ConfigEntry("Make outer airlocks optional", false)]AIRLOCK,
+			[ConfigEntry("Make outer airlocks optional", false)]AIRLOCK,//*
 			[ConfigEntry("Mattermitter range reduction factor by tier", typeof(float), 0.5F, 0, 1, 0.5F)]MATTERMITTER_RANGE_FACTOR,
 			[ConfigEntry("Mattermitter range flat reduction by tier", typeof(int), 0, 0, 64, 0)]MATTERMITTER_RANGE_DROP,
+			//*/
+			//[ConfigEntry("Mattermitter ranges by tier", typeof(int), 0, 0, 64, 0)]MATTERMITTER_RANGES,
 			[ConfigEntry("Casting pipe max range", typeof(int), 96, 16, 256, 31)]CASTING_PIPE,
 			[ConfigEntry("Remove FALCOR beacon sky access requirement", true)]FALCOR_SKY,
 			[ConfigEntry("Disable item despawning", false)]ITEM_DESPAWN,
@@ -42,6 +44,8 @@ namespace ReikaKalseki.FortressTweaks
 			[ConfigEntry("Enable Heimal Geothermal Crafting", true)]GEOHEIM,
 			[ConfigEntry("Make T2 cargo lift cheaper", true)]T2LIFT,
 			[ConfigEntry("Allow uncrafting of research pods to basic material items", false)]PODUNCRAFT,
+			[ConfigEntry("Disable slime ore drops", false)]SLIMEORE,
+			[ConfigEntry("Item Magnet Power Cost", typeof(float), 1, 0, 10, 0)]MAGNET_COST,
 		}
 	}
 }

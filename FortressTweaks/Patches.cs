@@ -588,7 +588,7 @@ namespace ReikaKalseki.FortressTweaks {
 		
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
-			int through = FortressTweaksMod.getConfig().getInt(FTConfig.ConfigEntries.CONDUIT_SPEED);
+			int through = FortressTweaksMod.getConfig().getInt(FTConfig.ConfigEntries.INDUCTION_CAP);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				for (int i = 0; i < codes.Count; i++) {
@@ -596,7 +596,7 @@ namespace ReikaKalseki.FortressTweaks {
 					if (ci.opcode == OpCodes.Stfld) {
 						FieldInfo fi = (FieldInfo)ci.operand;
 						if (fi.Name == "mrMaxPower" || fi.Name == "mrMaxTransferRate" || fi.Name == "mrMaxTransferRateOut") {
-							codes[i-1].operand = through;
+							codes[i-1].operand = (float)through;
 						}
 					}
 				}
@@ -618,7 +618,7 @@ namespace ReikaKalseki.FortressTweaks {
 		
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
-			int through = FortressTweaksMod.getConfig().getInt(FTConfig.ConfigEntries.INDUCTION_CAP);
+			int through = FortressTweaksMod.getConfig().getInt(FTConfig.ConfigEntries.CONDUIT_SPEED);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				for (int i = 0; i < codes.Count; i++) {
@@ -854,7 +854,7 @@ namespace ReikaKalseki.FortressTweaks {
 					CodeInstruction ci = codes[i];
 					if (ci.opcode == OpCodes.Callvirt && ((MethodInfo)ci.operand).Name == "UpdateCollection") {
 						ci.opcode = OpCodes.Call;
-						ci.operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "doPlayerItemCollection", false, new Type[]{typeof(Player), typeof(long), typeof(long), typeof(long), typeof(Vector3), typeof(float), typeof(float), typeof(float), typeof(int)});
+						ci.operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "doPlayerItemCollection", false, new Type[]{typeof(ItemManager), typeof(long), typeof(long), typeof(long), typeof(Vector3), typeof(float), typeof(float), typeof(float), typeof(int), typeof(Player)});
 						CodeInstruction ldself = new CodeInstruction(OpCodes.Ldarg_0);
 						codes.Insert(i, ldself);
 						break;
