@@ -71,10 +71,10 @@ namespace ReikaKalseki.FortressTweaks {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
-				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Callvirt, "Segment", "SearchEntity", true, new Type[]{typeof(long), typeof(long), typeof(long)});
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Callvirt, typeof(Segment), "SearchEntity", true, new Type[]{typeof(long), typeof(long), typeof(long)});
 				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
 				codes.RemoveAt(loc+1); //isinst
-				codes[loc].operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getStorageHandlerForEntityForBelt", false, new Type[]{typeof(Segment), typeof(long), typeof(long), typeof(long), typeof(ConveyorEntity)});
+				codes[loc].operand = InstructionHandlers.convertMethodOperand(typeof(FortressTweaksMod), "getStorageHandlerForEntityForBelt", false, new Type[]{typeof(Segment), typeof(long), typeof(long), typeof(long), typeof(ConveyorEntity)});
 				codes.Insert(loc, new CodeInstruction(OpCodes.Ldarg_0));
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
@@ -97,9 +97,9 @@ namespace ReikaKalseki.FortressTweaks {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
-				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Call, "CubeHelper", "IsCubeGlass", true, new Type[]{typeof(int)});
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Call, typeof(CubeHelper), "IsCubeGlass", true, new Type[]{typeof(int)});
 				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
-				codes[loc].operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "isCubeGlassForRoom", false, new Type[]{typeof(ushort), typeof(RoomController)});
+				codes[loc].operand = InstructionHandlers.convertMethodOperand(typeof(FortressTweaksMod), "isCubeGlassForRoom", false, new Type[]{typeof(ushort), typeof(RoomController)});
 				codes.Insert(loc, new CodeInstruction(OpCodes.Ldarg_0));
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
@@ -127,10 +127,10 @@ namespace ReikaKalseki.FortressTweaks {
 					if (ci.opcode == OpCodes.Stfld) {
 						CodeInstruction cp = codes[i-1];
 						if (cp.opcode == OpCodes.Ldc_R4 || (cp.opcode == OpCodes.Call && cp.operand is MethodInfo && ((MethodInfo)cp.operand).DeclaringType.BaseType == typeof(FortressCraftMod))) { //Mod compat
-							FieldInfo look = cp.opcode == OpCodes.Call ? null : InstructionHandlers.convertFieldOperand("SurvivalGrapplingHook", "mrGrappleDebounce");
+							FieldInfo look = cp.opcode == OpCodes.Call ? null : InstructionHandlers.convertFieldOperand(typeof(SurvivalGrapplingHook), "mrGrappleDebounce");
 							if (ci.operand == look || cp.opcode == OpCodes.Call) {
 								FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, i));
-								CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getGrappleCooldown", false, new Type[]{typeof(float)});
+								CodeInstruction call = InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "getGrappleCooldown", false, new Type[]{typeof(float)});
 								codes.Insert(i, call);
 								i += 2;
 							}
@@ -157,10 +157,10 @@ namespace ReikaKalseki.FortressTweaks {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
-				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Call, "TerrainData", "GetHardness", false, new Type[]{typeof(ushort), typeof(ushort)});
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Call, typeof(TerrainData), "GetHardness", false, new Type[]{typeof(ushort), typeof(ushort)});
 				loc = InstructionHandlers.getInstruction(codes, loc, 0, OpCodes.Ldc_I4);
 				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
-				codes[loc] = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "isCubeGeoPassable", false, new Type[]{typeof(ushort), typeof(GeothermalGenerator)});
+				codes[loc] = InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "isCubeGeoPassable", false, new Type[]{typeof(ushort), typeof(GeothermalGenerator)});
 				codes[loc+1].opcode = OpCodes.Brfalse;
 				codes.Insert(loc, new CodeInstruction(OpCodes.Ldarg_0));
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
@@ -184,12 +184,12 @@ namespace ReikaKalseki.FortressTweaks {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
-				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldsfld, "DifficultySettings", "mbCasualResource");
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldsfld, typeof(DifficultySettings), "mbCasualResource");
 				loc = InstructionHandlers.getInstruction(codes, loc, 0, OpCodes.Add);
 				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
 				List<CodeInstruction> inject = new List<CodeInstruction>();
 				inject.Add(new CodeInstruction(OpCodes.Ldarg_0));
-				inject.Add(InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getProducedGas", false, new Type[]{typeof(int), typeof(T4_ParticleFilter)}));
+				inject.Add(InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "getProducedGas", false, new Type[]{typeof(int), typeof(T4_ParticleFilter)}));
 				codes.InsertRange(loc, inject);
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
@@ -212,12 +212,12 @@ namespace ReikaKalseki.FortressTweaks {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
-				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldfld, "T4_ParticleCompressor", "CompressionTimer");
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldfld, typeof(T4_ParticleCompressor), "CompressionTimer");
 				loc = InstructionHandlers.getInstruction(codes, loc, 0, OpCodes.Add);
 				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
 				List<CodeInstruction> inject = new List<CodeInstruction>();
 				inject.Add(new CodeInstruction(OpCodes.Ldarg_0));
-				inject.Add(InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getCompressorSpeed", false, new Type[]{typeof(float), typeof(T4_ParticleCompressor)}));
+				inject.Add(InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "getCompressorSpeed", false, new Type[]{typeof(float), typeof(T4_ParticleCompressor)}));
 				codes.InsertRange(loc, inject);
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
@@ -240,11 +240,11 @@ namespace ReikaKalseki.FortressTweaks {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
-				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Stfld, "T4_MagmaBore", "TotalDrillPowerRequired");
+				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Stfld, typeof(T4_MagmaBore), "TotalDrillPowerRequired");
 				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
 				List<CodeInstruction> inject = new List<CodeInstruction>();
 				inject.Add(new CodeInstruction(OpCodes.Ldarg_0));
-				inject.Add(InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getMagmaborePowerCost", false, new Type[]{typeof(float), typeof(T4_MagmaBore)}));
+				inject.Add(InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "getMagmaborePowerCost", false, new Type[]{typeof(float), typeof(T4_MagmaBore)}));
 				codes.InsertRange(loc, inject);
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
@@ -273,7 +273,7 @@ namespace ReikaKalseki.FortressTweaks {
 					CodeInstruction ci = codes[i];
 					if (ci.opcode == OpCodes.Stfld) {
 						CodeInstruction cp = codes[i-1];
-						FieldInfo look = InstructionHandlers.convertFieldOperand("FALCOR_Beacon", "mbSolarBlocked");
+						FieldInfo look = InstructionHandlers.convertFieldOperand(typeof(FALCOR_Beacon), "mbSolarBlocked");
 						if (ci.operand == look) {
 							FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, i));
 							cp.opcode = OpCodes.Ldc_I4_0;
@@ -303,7 +303,7 @@ namespace ReikaKalseki.FortressTweaks {
 				for (int i = 0; i < codes.Count; i++) {
 					CodeInstruction ci = codes[i];
 					if (ci.opcode == OpCodes.Div) {
-						codes.Insert(i+1, InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getSharedPSBPower", false, new Type[]{typeof(float), typeof(PowerStorageBlock), typeof(PowerStorageBlock)}));
+						codes.Insert(i+1, InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "getSharedPSBPower", false, new Type[]{typeof(float), typeof(PowerStorageBlock), typeof(PowerStorageBlock)}));
 						//codes.Insert(i+1, new CodeInstruction(OpCodes.Ldloc_S, 6)); //original amt
 						codes.Insert(i+1, new CodeInstruction(OpCodes.Ldloc_S, 5)); //other psb
 						codes.Insert(i+1, new CodeInstruction(OpCodes.Ldarg_0)); //this
@@ -405,7 +405,7 @@ namespace ReikaKalseki.FortressTweaks {
 					CodeInstruction ci = codes[i];
 					if (ci.opcode == OpCodes.Callvirt && ((MethodInfo)ci.operand).Name == "Explode") {
 						ci.opcode = OpCodes.Call;
-						ci.operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "doOETBlockEffects", false, new Type[]{typeof(WorldScript), typeof(long), typeof(long), typeof(long), typeof(int), typeof(int)});
+						ci.operand = InstructionHandlers.convertMethodOperand(typeof(FortressTweaksMod), "doOETBlockEffects", false, new Type[]{typeof(WorldScript), typeof(long), typeof(long), typeof(long), typeof(int), typeof(int)});
 						break;
 					}
 				}
@@ -429,7 +429,7 @@ namespace ReikaKalseki.FortressTweaks {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
-				CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "updateOETRequiredCharge", false, new Type[0]);
+				CodeInstruction call = InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "updateOETRequiredCharge", false, new Type[0]);
 				codes.Insert(0, call);
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
 			}
@@ -454,7 +454,7 @@ namespace ReikaKalseki.FortressTweaks {
 				int ret = InstructionHandlers.getLastOpcodeBefore(codes, codes.Count, OpCodes.Ret);
 				int call = InstructionHandlers.getLastOpcodeBefore(codes, ret, OpCodes.Callvirt);
 				codes[call].opcode = OpCodes.Call;
-				codes[call].operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "deleteOET", false, new Type[]{typeof(WorldScript), typeof(Segment), typeof(long), typeof(long), typeof(long), typeof(ushort)});
+				codes[call].operand = InstructionHandlers.convertMethodOperand(typeof(FortressTweaksMod), "deleteOET", false, new Type[]{typeof(WorldScript), typeof(Segment), typeof(long), typeof(long), typeof(long), typeof(ushort)});
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
 			}
 			catch (Exception e) {
@@ -476,7 +476,7 @@ namespace ReikaKalseki.FortressTweaks {
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				int ret = InstructionHandlers.getLastOpcodeBefore(codes, codes.Count, OpCodes.Ret);
-				CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "guaranteeAirlock", false, new Type[]{typeof(Room_Airlock)});
+				CodeInstruction call = InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "guaranteeAirlock", false, new Type[]{typeof(Room_Airlock)});
 				codes.Insert(ret, call);
 				CodeInstruction ldself = new CodeInstruction(OpCodes.Ldarg_0);
 				codes.Insert(ret, ldself);
@@ -504,7 +504,7 @@ namespace ReikaKalseki.FortressTweaks {
 					CodeInstruction ci = codes[i];
 					if (ci.opcode == OpCodes.Ldfld && ((FieldInfo)ci.operand).Name == "LinkedAirLock") {
 						ci.opcode = OpCodes.Call;
-						ci.operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "guaranteeAirlockDuringCheck", false, new Type[]{typeof(Room_Airlock)});
+						ci.operand = InstructionHandlers.convertMethodOperand(typeof(FortressTweaksMod), "guaranteeAirlockDuringCheck", false, new Type[]{typeof(Room_Airlock)});
 						break;
 					}
 				}
@@ -564,7 +564,7 @@ namespace ReikaKalseki.FortressTweaks {
 				for (int i = 0; i < codes.Count; i++) {
 					CodeInstruction ci = codes[i];
 					if (ci.opcode == OpCodes.Stfld && ((FieldInfo)ci.operand).Name == "mnMaxTransmitDistance") {
-						CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "setMMRange", false, new Type[]{typeof(MatterMover)});
+						CodeInstruction call = InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "setMMRange", false, new Type[]{typeof(MatterMover)});
 						codes.Insert(i+1, call);
 						CodeInstruction ldself = new CodeInstruction(OpCodes.Ldarg_0);
 						codes.Insert(i+1, ldself);
@@ -788,7 +788,7 @@ namespace ReikaKalseki.FortressTweaks {
 					if (ci.opcode == OpCodes.Stfld && ((FieldInfo)ci.operand).Name == "mrCraftingTimer") {
 						CodeInstruction prev = codes[i-1];
 						if (prev.opcode == OpCodes.Sub) {
-							CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "progressGACTimer", false, new Type[]{typeof(float), typeof(float), typeof(GenericAutoCrafterNew)});
+							CodeInstruction call = InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "progressGACTimer", false, new Type[]{typeof(float), typeof(float), typeof(GenericAutoCrafterNew)});
 							codes.Insert(i, call);
 							CodeInstruction ldself = new CodeInstruction(OpCodes.Ldarg_0);
 							codes[i-1] = ldself;
@@ -854,7 +854,7 @@ namespace ReikaKalseki.FortressTweaks {
 					CodeInstruction ci = codes[i];
 					if (ci.opcode == OpCodes.Callvirt && ((MethodInfo)ci.operand).Name == "UpdateCollection") {
 						ci.opcode = OpCodes.Call;
-						ci.operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "doPlayerItemCollection", false, new Type[]{typeof(ItemManager), typeof(long), typeof(long), typeof(long), typeof(Vector3), typeof(float), typeof(float), typeof(float), typeof(int), typeof(Player)});
+						ci.operand = InstructionHandlers.convertMethodOperand(typeof(FortressTweaksMod), "doPlayerItemCollection", false, new Type[]{typeof(ItemManager), typeof(long), typeof(long), typeof(long), typeof(Vector3), typeof(float), typeof(float), typeof(float), typeof(int), typeof(Player)});
 						CodeInstruction ldself = new CodeInstruction(OpCodes.Ldarg_0);
 						codes.Insert(i, ldself);
 						break;
@@ -881,10 +881,66 @@ namespace ReikaKalseki.FortressTweaks {
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				codes.Add(new CodeInstruction(OpCodes.Ldarg_0));
-				CodeInstruction call = InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.MusicReplacement", "getMusicCategory", false, new Type[]{typeof(AudioMusicManager)});
+				CodeInstruction call = InstructionHandlers.createMethodCall(typeof(MusicReplacement), "getMusicCategory", false, new Type[]{typeof(AudioMusicManager)});
 				codes.Add(call);
 				codes.Add(new CodeInstruction(OpCodes.Ret));
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(SurvivalFogManager))]
+	[HarmonyPatch("Update")]
+	public static class SurvivalFogHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int idx = InstructionHandlers.getFirstOpcode(codes, 0, OpCodes.Stsfld);
+				codes[idx] = InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "onSetSurvivalDepth", false, new Type[]{typeof(int)});
+				
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(LocalPlayerScript))]
+	[HarmonyPatch("UpdateMovement")]
+	public static class FallDamageHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int idx = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Callvirt, typeof(SurvivalPlayerScript), "DoDamageAnim", true, new Type[]{typeof(float)});
+				//int idx2 = idx+1;
+				//int idx1 = InstructionHandlers.getLastOpcodeBefore(codes, idx, OpCodes.Ldloc_S);
+				
+				//do in reverse order to prevent idx1 from changing idx2
+				//codes.Insert(idx2+1, InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getFallDamage", false, new Type[]{typeof(int)}));
+				//codes.Insert(idx1+1, InstructionHandlers.createMethodCall("ReikaKalseki.FortressTweaks.FortressTweaksMod", "getFallDamage", false, new Type[]{typeof(int)}));
+				
+				idx = InstructionHandlers.getLastOpcodeBefore(codes, idx, OpCodes.Stloc_S);
+				codes.Insert(idx, InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "getFallDamage", false, new Type[]{typeof(int)}));
+				
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				//FileLog.Log("Codes are "+InstructionHandlers.toString(codes));
 			}
 			catch (Exception e) {
 				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
@@ -962,7 +1018,7 @@ namespace ReikaKalseki.FortressTweaks {
 			for (int i = 0; i < codes.Count; i++) {
 				CodeInstruction ci = codes[i];
 				if (ci.opcode == OpCodes.Call) {
-					MethodInfo look = InstructionHandlers.convertMethodOperand("CubeHelper", "IsCubeSelectable", false, new Type[]{typeof(int)});
+					MethodInfo look = InstructionHandlers.convertMethodOperand(typeof(CubeHelper), "IsCubeSelectable", false, new Type[]{typeof(int)});
 					if (ci.operand == look) {
 						FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, i));
 						patchCubeSelect(codes, i);
@@ -972,10 +1028,10 @@ namespace ReikaKalseki.FortressTweaks {
 		}
 		
 		private static void patchCubeSelect(List<CodeInstruction> codes, int loc) {
-			int nextCall = InstructionHandlers.getLastInstructionBefore(codes, loc, OpCodes.Callvirt, "Segment", "GetCubeDataNoChecking", true, new Type[]{typeof(int), typeof(int), typeof(int), typeof(ushort).MakeByRefType(), typeof(CubeData).MakeByRefType()});
+			int nextCall = InstructionHandlers.getLastInstructionBefore(codes, loc, OpCodes.Callvirt, typeof(Segment), "GetCubeDataNoChecking", true, new Type[]{typeof(int), typeof(int), typeof(int), typeof(ushort).MakeByRefType(), typeof(CubeData).MakeByRefType()});
 			FileLog.Log("Found ref "+InstructionHandlers.toString(codes, nextCall));
 			object val = codes[nextCall-1].operand;
-			codes[loc].operand = InstructionHandlers.convertMethodOperand("ReikaKalseki.FortressTweaks.FortressTweaksMod", "canCubeBeMouseClicked", false, new Type[]{typeof(ushort), typeof(CubeData).MakeByRefType()});
+			codes[loc].operand = InstructionHandlers.convertMethodOperand(typeof(FortressTweaksMod), "canCubeBeMouseClicked", false, new Type[]{typeof(ushort), typeof(CubeData).MakeByRefType()});
 			CodeInstruction ci = new CodeInstruction(OpCodes.Ldloca_S, val);
 			FileLog.Log("Injecting "+InstructionHandlers.toString(ci));
 			codes.Insert(loc, ci);

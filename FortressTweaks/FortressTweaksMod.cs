@@ -37,6 +37,26 @@ namespace ReikaKalseki.FortressTweaks
           ModCubeType = entry.CubeType;
          */        
         
+        int all = 0;
+        int failed = 0;
+        List<string> success = new List<string>();
+        foreach (System.Reflection.Assembly a in AppDomain.CurrentDomain.GetAssemblies()) {
+        	all++;
+        	try {
+        		FUtil.log("Testing assembly "+a.FullName);
+        		FUtil.log("Location @ "+a.Location);
+        		int amt = a.GetTypes().Length;
+        		FUtil.log("Found "+amt+" classes.");
+        		success.Add(a.Location);
+        	}
+        	catch (Exception e) {
+        		FUtil.log("Threw exception on access: "+e);
+        		failed++;
+        	}
+        }
+        FUtil.log("Failed to parse "+failed+"/"+all+" assemblies");
+        FUtil.log("Successes:\n"+string.Join("\n", success.ToArray()));
+        
         config.load();
         
         var harmony = HarmonyInstance.Create("ReikaKalseki.FortressTweaks");
@@ -66,6 +86,8 @@ namespace ReikaKalseki.FortressTweaks
         T3_FuelCompressor.MAX_HIGHOCTANE = config.getInt(FTConfig.ConfigEntries.HOF_CACHE);
         
         UIManager.instance.mSuitPanel.ValidItems.Add(ItemEntry.mEntriesByKey["ReikaKalseki.ItemMagnet"].ItemID);
+        UIManager.instance.mSuitPanel.ValidItems.Add(ItemEntry.mEntriesByKey["ReikaKalseki.NightVision"].ItemID);
+        UIManager.instance.mSuitPanel.ValidItems.Add(ItemEntry.mEntriesByKey["ReikaKalseki.SpringBoots"].ItemID);
         
         applyRecipeChanges();
         
@@ -81,6 +103,13 @@ namespace ReikaKalseki.FortressTweaks
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("ForcedInductionMK6")) { //ARC upgrade
 	        	RecipeUtil.modifyIngredientCount(rec, "AlloyedMachineBlock", 16); //was 512
 	        	RecipeUtil.modifyIngredientCount(rec, "PowerBoosterMK5", 5); //was 2
+	        }
+        }
+        
+    	int hopp = config.getInt(FTConfig.ConfigEntries.HOPPER_COST);
+        if (hopp != 10) { //skip doing if vanilla
+	        foreach (CraftData rec in RecipeUtil.getRecipesFor("StorageHopper")) {
+    			RecipeUtil.modifyIngredientCount(rec, "IronGear", (uint)hopp);
 	        }
         }
         
@@ -274,10 +303,11 @@ namespace ReikaKalseki.FortressTweaks
     	int id = ItemEntry.GetIDFromKey("ReikaKalseki.ItemMagnet", true);
     	//FUtil.log("Has magnet "+id+" : "+inv.GetSuitAndInventoryItemCount(id));
     	float pwr = config.getFloat(FTConfig.ConfigEntries.MAGNET_COST);
-		if (SurvivalPowerPanel.mrSuitPower >= pwr && id > 0 && inv.GetSuitAndInventoryItemCount(id) > 0) { //TODO cache this for performance
+    	float pt = pwr*Time.deltaTime;
+		if (SurvivalPowerPanel.mrSuitPower >= pt && id > 0 && inv.GetSuitAndInventoryItemCount(id) > 0) { //TODO cache this for performance
     		range *= 6;
     		magRange *= 6;
-    		SurvivalPowerPanel.mrSuitPower -= pwr;
+    		SurvivalPowerPanel.mrSuitPower -= pt;
 		}
     	DroppedItemData droppedItem = mgr.UpdateCollection(x, y, z, off, magRange, magStrength, range, maxStack);
     	return droppedItem;
@@ -357,6 +387,57 @@ namespace ReikaKalseki.FortressTweaks
 			}
 			WorldScript.instance.mNodeWorkerThread.KickNodeWorkerThread();
 		}
+    }
+    
+    public static void onSetSurvivalDepth(int depth) {
+    	SurvivalFogManager.GlobalDepth = depth;
+    	depth = -depth; // is otherwise < 0 in caves
+    	bool flag = false;
+    	if (depth > 24) {
+	    	int id = ItemEntry.GetIDFromKey("ReikaKalseki.NightVision", true);
+	    	float pwr = config.getFloat(FTConfig.ConfigEntries.NV_COST);
+    		float pt = pwr*Time.deltaTime;
+			if (SurvivalPowerPanel.mrSuitPower >= pt && id > 0 && WorldScript.mLocalPlayer.mInventory.GetSuitAndInventoryItemCount(id) > 0) { //TODO cache this for performance
+	    		SurvivalPowerPanel.mrSuitPower -= pt;
+	    		flag = true;	    		
+			}
+    	}
+    	if (flag) {
+    		RenderSettings.ambientIntensity = Mathf.Min(config.getFloat(FTConfig.ConfigEntries.NV_STRENGTH), RenderSettings.ambientIntensity+0.25F*Time.deltaTime);
+		    RenderSettings.ambientLight = new Color(173/255F, 234/255F, 1, 1);
+    	}
+    	else {
+    		RenderSettings.ambientIntensity = Mathf.Max(0, RenderSettings.ambientIntensity-0.125F*Time.deltaTime);
+    	}
+    }
+    
+    public static float getFallDamage(float amt) {
+    	if (amt > 0) {
+    		int id = ItemEntry.GetIDFromKey("ReikaKalseki.SpringBoots", true);
+    		//player has 100 health
+    		float pwr = Mathf.Lerp(Mathf.Min(1, amt/100F), config.getFloat(FTConfig.ConfigEntries.FALL_BOOT_COST_MIN), config.getFloat(FTConfig.ConfigEntries.FALL_BOOT_COST_MAX));
+    		if (SurvivalPowerPanel.mrSuitPower >= pwr && id > 0 && WorldScript.mLocalPlayer.mInventory.GetSuitAndInventoryItemCount(id) > 0) {
+	    		float orig = amt;
+	    		amt = (amt*0.8F)-10;
+    			bool kill = orig >= SurvivalPowerPanel.CurrentHealth;
+	    		bool lethalSave = orig >= 100F && SurvivalPowerPanel.CurrentHealth >= 100;
+	    		bool stillKill = amt >= SurvivalPowerPanel.CurrentHealth;
+	    		if (stillKill) {
+	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots reduced the fall injury but it was still enough to kill you", 15, false, true);
+	    		}
+	    		else if (lethalSave) {
+	    			amt = Mathf.Min(amt, 90);
+	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots saved you from a guaranteed fatal fall", 15, false, true);
+	    		}
+	    		else if (kill) {
+	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots saved you from a fall that would have killed you", 15, false, true);
+	    		}
+	    		else {
+	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots reduced your injury from the fall, saving "+(orig-amt).ToString("0.0")+"% of your health", 30, false, true);
+	    		}
+    		}
+    	}
+    	return amt;
     }
 
   }
