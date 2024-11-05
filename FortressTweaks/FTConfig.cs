@@ -50,7 +50,7 @@ namespace ReikaKalseki.FortressTweaks
 			[ConfigEntry("Night Vision Lighting Strength", typeof(float), 0.3F, 0, 1, 0)]NV_STRENGTH,
 			[ConfigEntry("Spring Boots Damage Reduction Power Cost (Minimum)", typeof(float), 16, 0, 512, 0)]FALL_BOOT_COST_MIN,
 			[ConfigEntry("Spring Boots Damage Reduction Power Cost (Maximum)", typeof(float), 64, 0, 512, 0)]FALL_BOOT_COST_MAX,
-			[ConfigEntry("Hopper Gear Cost", typeof(int), 8, 1, 100, 10)]HOPPER_COST,
+			[ConfigEntry("Hopper Gear Cost", typeof(int), 6, 1, 100, 10)]HOPPER_COST,
 		}
 	}
 }

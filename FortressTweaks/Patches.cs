@@ -371,16 +371,8 @@ namespace ReikaKalseki.FortressTweaks {
 			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
-				for (int i = 0; i < codes.Count; i++) {
-					CodeInstruction ci = codes[i];
-					if (ci.opcode == OpCodes.Ldsfld && ((FieldInfo)ci.operand).Name == "mnTotalItemsUpdated") {
-						CodeInstruction next = codes[i+1];
-						if (ci.opcode == OpCodes.Ldc_I4) {
-							next.operand = Int32.MaxValue;
-							break;
-						}
-					}
-				}
+				int idx = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldsfld, typeof(SegmentUpdater), "mnTotalItemsUpdated");
+				codes[idx+1].operand = 999999999;
 				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
 			}
 			catch (Exception e) {

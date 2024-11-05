@@ -389,6 +389,8 @@ namespace ReikaKalseki.FortressTweaks
 		}
     }
     
+    private static float nightVisionBrightness = 0;
+    
     public static void onSetSurvivalDepth(int depth) {
     	SurvivalFogManager.GlobalDepth = depth;
     	depth = -depth; // is otherwise < 0 in caves
@@ -403,11 +405,19 @@ namespace ReikaKalseki.FortressTweaks
 			}
     	}
     	if (flag) {
-    		RenderSettings.ambientIntensity = Mathf.Min(config.getFloat(FTConfig.ConfigEntries.NV_STRENGTH), RenderSettings.ambientIntensity+0.25F*Time.deltaTime);
-		    RenderSettings.ambientLight = new Color(173/255F, 234/255F, 1, 1);
+    		float f = config.getFloat(FTConfig.ConfigEntries.NV_STRENGTH)*0.4F;
+    		nightVisionBrightness = Mathf.Min(f, RenderSettings.ambientIntensity+0.25F*Time.deltaTime*f);
     	}
     	else {
-    		RenderSettings.ambientIntensity = Mathf.Max(0, RenderSettings.ambientIntensity-0.125F*Time.deltaTime);
+    		nightVisionBrightness = Mathf.Max(0, RenderSettings.ambientIntensity-0.125F*Time.deltaTime);
+    	}
+    	if (depth > 24) {
+	    	RenderSettings.ambientIntensity = 1;
+			RenderSettings.ambientLight = new Color(173/255F, 234/255F, 1, 1)*nightVisionBrightness;
+			DynamicGI.UpdateEnvironment();
+    	}
+    	else {
+    		
     	}
     }
     
@@ -432,8 +442,11 @@ namespace ReikaKalseki.FortressTweaks
 	    		else if (kill) {
 	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots saved you from a fall that would have killed you", 15, false, true);
 	    		}
+	    		else if (amt <= 0) {
+	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots prevented your injury from the fall, saving "+orig.ToString("0.0")+"% of your health", 15, false, true);
+	    		}
 	    		else {
-	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots reduced your injury from the fall, saving "+(orig-amt).ToString("0.0")+"% of your health", 30, false, true);
+	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots reduced your injury from the fall, saving "+(orig-amt).ToString("0.0")+"% of your health", 15, false, true);
 	    		}
     		}
     	}
