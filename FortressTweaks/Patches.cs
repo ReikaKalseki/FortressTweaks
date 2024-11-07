@@ -413,6 +413,30 @@ namespace ReikaKalseki.FortressTweaks {
 		}
 	}
 	
+	[HarmonyPatch(typeof(MobSpawnManager))]
+	[HarmonyPatch("GetBaseThreat")]
+	public static class CalmerAgitatorMagnitudes {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int idx = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldsfld, typeof(SegmentUpdater), "mnNumWaspAgitators");
+				codes[idx+2].operand = InstructionHandlers.convertMethodOperand(typeof(FortressTweaksMod), "getAgitatorStrength", false, new Type[0]);
+				idx = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldsfld, typeof(SegmentUpdater), "mnNumWaspCalmers");
+				codes[idx+2].operand = InstructionHandlers.convertMethodOperand(typeof(FortressTweaksMod), "getCalmerStrength", false, new Type[0]);
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
 	[HarmonyPatch(typeof(OrbitalEnergyTransmitter))]
 	[HarmonyPatch("LowFrequencyUpdate")]
 	public static class OETChargeHook {

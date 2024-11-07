@@ -106,6 +106,22 @@ namespace ReikaKalseki.FortressTweaks
 	        }
         }
         
+        if (config.getBoolean(FTConfig.ConfigEntries.CHEAP_INDUCTION)) {
+	        foreach (CraftData rec in RecipeUtil.getRecipesFor("InductionChargerPlacement")) {
+	        	RecipeUtil.removeIngredient(rec, "PowerStorageMK2");
+	        	//RecipeUtil.modifyIngredientCount(rec, "PowerBoosterMK2", 5); //was 5
+    			RecipeUtil.addIngredient(rec, "PowerStorageMK1", 5);
+	        }
+        }
+    	
+    	foreach (CraftData rec in RecipeUtil.getRecipesFor("ThreatReducer")) {
+    		RecipeUtil.removeIngredient(rec, "CopperBar");
+    		RecipeUtil.removeIngredient(rec, "FortifiedPCB");
+    		RecipeUtil.addIngredient(rec, "BasicPCB", 6);
+    		RecipeUtil.addIngredient(rec, "IronGear", 4);
+    		RecipeUtil.addIngredient(rec, "LightweightMachineHousing", 1);
+	    }
+        
     	int hopp = config.getInt(FTConfig.ConfigEntries.HOPPER_COST);
         if (hopp != 10) { //skip doing if vanilla
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("StorageHopper")) {
@@ -405,19 +421,20 @@ namespace ReikaKalseki.FortressTweaks
 			}
     	}
     	if (flag) {
-    		float f = config.getFloat(FTConfig.ConfigEntries.NV_STRENGTH)*0.4F;
+    		float f = config.getFloat(FTConfig.ConfigEntries.NV_STRENGTH)*0.33F;
     		nightVisionBrightness = Mathf.Min(f, RenderSettings.ambientIntensity+0.25F*Time.deltaTime*f);
     	}
     	else {
     		nightVisionBrightness = Mathf.Max(0, RenderSettings.ambientIntensity-0.125F*Time.deltaTime);
     	}
-    	if (depth > 24) {
-	    	RenderSettings.ambientIntensity = 1;
+    	if (depth > 24 && SurvivalPowerPanel.mrSuitPower > 0) {
+	    	RenderSettings.ambientIntensity = nightVisionBrightness;
 			RenderSettings.ambientLight = new Color(173/255F, 234/255F, 1, 1)*nightVisionBrightness;
 			DynamicGI.UpdateEnvironment();
     	}
     	else {
-    		
+    		RenderSettings.ambientIntensity = 0;
+    		RenderSettings.ambientLight = Color.black;
     	}
     }
     
@@ -451,6 +468,14 @@ namespace ReikaKalseki.FortressTweaks
     		}
     	}
     	return amt;
+    }
+    
+    public static float getAgitatorStrength() {
+    	return 0.1F*config.getFloat(FTConfig.ConfigEntries.AGITATOR_STRENGTH);
+    }
+    
+    public static float getCalmerStrength() {
+    	return 0.5F*config.getFloat(FTConfig.ConfigEntries.CALMER_STRENGTH);
     }
 
   }
