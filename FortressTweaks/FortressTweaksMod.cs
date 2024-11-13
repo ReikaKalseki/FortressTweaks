@@ -3,7 +3,7 @@ using System.IO;    //For data read/write methods
 using System;    //For data read/write methods
 using System.Collections.Generic;   //Working with Lists and Collections
 using System.Linq;   //More advanced manipulation of lists/collections
-using System.Threading;
+using System.Reflection.Emit;
 using Harmony;
 using ReikaKalseki.FortressTweaks;
 using ReikaKalseki.FortressCore;
@@ -59,21 +59,16 @@ namespace ReikaKalseki.FortressTweaks
         
         config.load();
         
-        var harmony = HarmonyInstance.Create("ReikaKalseki.FortressTweaks");
-        HarmonyInstance.DEBUG = true;
-        FileLog.Log("Ran mod register, started harmony (harmony log)");
-        FUtil.log("Ran mod register, started harmony");
+        runHarmony();
         
-        try {
-			harmony.PatchAll(System.Reflection.Assembly.GetExecutingAssembly());
-        }
-        catch (Exception e) {
-			FileLog.Log("Caught exception when running patcher!");
-			FileLog.Log(e.Message);
-			FileLog.Log(e.StackTrace);
-			FileLog.Log(e.ToString());
-        }        
-        FUtil.log("Harmony patches complete.");
+        Type t = InstructionHandlers.getTypeBySimpleName("DiNSCustomT4Turret");
+		if (t != null) {
+			InstructionHandlers.patchMethod(harmony, t, "TrackTarget", modDLL, codes => {
+				int idx = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldc_R4, 37800F);
+				codes[idx].operand = config.getFloat(FTConfig.ConfigEntries.MK4_TURRET_PPS);
+			});
+        	FUtil.log("Patch to "+t.Name+" complete.");
+		}
         
         CubeHelper.mabIsCubeTypeGlass[eCubeTypes.EnergyGrommet] = true;
         CubeHelper.mabIsCubeTypeGlass[eCubeTypes.LogisticsGrommet] = true;
@@ -84,10 +79,6 @@ namespace ReikaKalseki.FortressTweaks
         FreightCartMob.OreFreighterWithdrawalPerTick = config.getInt(FTConfig.ConfigEntries.FREIGHT_SPEED); //base is 5, barely better than minecarts; was 25 here until 2022
         
         T3_FuelCompressor.MAX_HIGHOCTANE = config.getInt(FTConfig.ConfigEntries.HOF_CACHE);
-        
-        UIManager.instance.mSuitPanel.ValidItems.Add(ItemEntry.mEntriesByKey["ReikaKalseki.ItemMagnet"].ItemID);
-        UIManager.instance.mSuitPanel.ValidItems.Add(ItemEntry.mEntriesByKey["ReikaKalseki.NightVision"].ItemID);
-        UIManager.instance.mSuitPanel.ValidItems.Add(ItemEntry.mEntriesByKey["ReikaKalseki.SpringBoots"].ItemID);
         
         applyRecipeChanges();
         
@@ -113,6 +104,21 @@ namespace ReikaKalseki.FortressTweaks
     			RecipeUtil.addIngredient(rec, "PowerStorageMK1", 5);
 	        }
         }
+        
+        if (config.getBoolean(FTConfig.ConfigEntries.CHEAP_TRICKY_OT)) {
+    		CraftData rec = RecipeUtil.getRecipeByKey("Tricky.1000SlotHopperx");
+    		if (rec != null) {
+    			CraftCost ing = RecipeUtil.removeIngredient(rec, "ImbuedMachineBlock");
+    			if (ing != null)
+    				RecipeUtil.addIngredient(rec, "PlasticPellet", ing.Amount*5);
+    		}
+    		rec = RecipeUtil.getRecipeByKey("Tricky.2000SlotHopperx");
+    		if (rec != null) {
+    			CraftCost ing = RecipeUtil.removeIngredient(rec, "ImbuedMachineBlock");
+    			if (ing != null)
+    				RecipeUtil.addIngredient(rec, "PlasticPellet", ing.Amount*10);
+    		}
+        }
     	
     	foreach (CraftData rec in RecipeUtil.getRecipesFor("ThreatReducer")) {
     		RecipeUtil.removeIngredient(rec, "CopperBar");
@@ -135,6 +141,12 @@ namespace ReikaKalseki.FortressTweaks
 	        	RecipeUtil.modifyIngredientCount(rec, "ChromiumBar", 256); //was 1024
 	        	RecipeUtil.removeResearch(rec, "T4_MagmaBore");
 	        	RecipeUtil.addResearch(rec, "T4_drills_2");
+	        }
+        }
+        
+        if (config.getBoolean(FTConfig.ConfigEntries.CHEAPER_MK4_TURRET)) {
+	        foreach (CraftData rec in RecipeUtil.getRecipesFor("T4EnergyTurretPlacement")) {
+	        	RecipeUtil.modifyIngredientCount(rec, "ExceptionalOrganicLens", 1); //was 2
 	        }
         }
         
@@ -314,21 +326,6 @@ namespace ReikaKalseki.FortressTweaks
     	return Math.Max(0, prevTimerValue-step*speed);
     }
     
-    public static DroppedItemData doPlayerItemCollection(ItemManager mgr, long x, long y, long z, Vector3 off, float magRange, float magStrength, float range, int maxStack, Player p) {
-    	PlayerInventory inv = p.mInventory;
-    	int id = ItemEntry.GetIDFromKey("ReikaKalseki.ItemMagnet", true);
-    	//FUtil.log("Has magnet "+id+" : "+inv.GetSuitAndInventoryItemCount(id));
-    	float pwr = config.getFloat(FTConfig.ConfigEntries.MAGNET_COST);
-    	float pt = pwr*Time.deltaTime;
-		if (SurvivalPowerPanel.mrSuitPower >= pt && id > 0 && inv.GetSuitAndInventoryItemCount(id) > 0) { //TODO cache this for performance
-    		range *= 6;
-    		magRange *= 6;
-    		SurvivalPowerPanel.mrSuitPower -= pt;
-		}
-    	DroppedItemData droppedItem = mgr.UpdateCollection(x, y, z, off, magRange, magStrength, range, maxStack);
-    	return droppedItem;
-    }
-    
     public static bool doOETBlockEffects(WorldScript world, long x0, long y0, long z0, int size, int hardness) {
     	if (MobSpawnManager.mbSurfaceAttacksActive || !config.getBoolean(FTConfig.ConfigEntries.OET)) {
     	//	WorldScript.instance.Explode(x0, y0, z0, size, hardness);
@@ -405,77 +402,8 @@ namespace ReikaKalseki.FortressTweaks
 		}
     }
     
-    private static float nightVisionBrightness = 0;
-    
-    public static void onSetSurvivalDepth(int depth) {
-    	SurvivalFogManager.GlobalDepth = depth;
-    	depth = -depth; // is otherwise < 0 in caves
-    	bool flag = false;
-    	if (depth > 24) {
-	    	int id = ItemEntry.GetIDFromKey("ReikaKalseki.NightVision", true);
-	    	float pwr = config.getFloat(FTConfig.ConfigEntries.NV_COST);
-    		float pt = pwr*Time.deltaTime;
-			if (SurvivalPowerPanel.mrSuitPower >= pt && id > 0 && WorldScript.mLocalPlayer.mInventory.GetSuitAndInventoryItemCount(id) > 0) { //TODO cache this for performance
-	    		SurvivalPowerPanel.mrSuitPower -= pt;
-	    		flag = true;	    		
-			}
-    	}
-    	if (flag) {
-    		float f = config.getFloat(FTConfig.ConfigEntries.NV_STRENGTH)*0.33F;
-    		nightVisionBrightness = Mathf.Min(f, RenderSettings.ambientIntensity+0.25F*Time.deltaTime*f);
-    	}
-    	else {
-    		nightVisionBrightness = Mathf.Max(0, RenderSettings.ambientIntensity-0.125F*Time.deltaTime);
-    	}
-    	if (depth > 24 && SurvivalPowerPanel.mrSuitPower > 0) {
-	    	RenderSettings.ambientIntensity = nightVisionBrightness;
-			RenderSettings.ambientLight = new Color(173/255F, 234/255F, 1, 1)*nightVisionBrightness;
-			DynamicGI.UpdateEnvironment();
-    	}
-    	else {
-    		RenderSettings.ambientIntensity = 0;
-    		RenderSettings.ambientLight = Color.black;
-    	}
-    }
-    
-    public static float getFallDamage(float amt) {
-    	if (amt > 0) {
-    		int id = ItemEntry.GetIDFromKey("ReikaKalseki.SpringBoots", true);
-    		//player has 100 health
-    		float pwr = Mathf.Lerp(Mathf.Min(1, amt/100F), config.getFloat(FTConfig.ConfigEntries.FALL_BOOT_COST_MIN), config.getFloat(FTConfig.ConfigEntries.FALL_BOOT_COST_MAX));
-    		if (SurvivalPowerPanel.mrSuitPower >= pwr && id > 0 && WorldScript.mLocalPlayer.mInventory.GetSuitAndInventoryItemCount(id) > 0) {
-	    		float orig = amt;
-	    		amt = (amt*0.8F)-10;
-    			bool kill = orig >= SurvivalPowerPanel.CurrentHealth;
-	    		bool lethalSave = orig >= 100F && SurvivalPowerPanel.CurrentHealth >= 100;
-	    		bool stillKill = amt >= SurvivalPowerPanel.CurrentHealth;
-	    		if (stillKill) {
-	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots reduced the fall injury but it was still enough to kill you", 15, false, true);
-	    		}
-	    		else if (lethalSave) {
-	    			amt = Mathf.Min(amt, 90);
-	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots saved you from a guaranteed fatal fall", 15, false, true);
-	    		}
-	    		else if (kill) {
-	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots saved you from a fall that would have killed you", 15, false, true);
-	    		}
-	    		else if (amt <= 0) {
-	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots prevented your injury from the fall, saving "+orig.ToString("0.0")+"% of your health", 15, false, true);
-	    		}
-	    		else {
-	    			ARTHERPetSurvival.instance.SetARTHERReadoutText("Spring Boots reduced your injury from the fall, saving "+(orig-amt).ToString("0.0")+"% of your health", 15, false, true);
-	    		}
-    		}
-    	}
-    	return amt;
-    }
-    
-    public static float getAgitatorStrength() {
-    	return 0.1F*config.getFloat(FTConfig.ConfigEntries.AGITATOR_STRENGTH);
-    }
-    
-    public static float getCalmerStrength() {
-    	return 0.5F*config.getFloat(FTConfig.ConfigEntries.CALMER_STRENGTH);
+    public static float getHeadlightEffect() {
+    	return config.getFloat(FTConfig.ConfigEntries.HEADLIGHT_MODULE_EFFECT);
     }
 
   }

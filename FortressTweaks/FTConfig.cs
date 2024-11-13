@@ -45,15 +45,12 @@ namespace ReikaKalseki.FortressTweaks
 			[ConfigEntry("Make T2 cargo lift cheaper", true)]T2LIFT,
 			[ConfigEntry("Allow uncrafting of research pods to basic material items", false)]PODUNCRAFT,
 			[ConfigEntry("Disable slime ore drops", false)]SLIMEORE,
-			[ConfigEntry("Item Magnet Power Cost", typeof(float), 0.1F, 0, 10, 0)]MAGNET_COST,
-			[ConfigEntry("Night Vision Power Cost", typeof(float), 0.4F, 0, 10, 0)]NV_COST,
-			[ConfigEntry("Night Vision Lighting Strength", typeof(float), 0.3F, 0, 1, 0)]NV_STRENGTH,
-			[ConfigEntry("Spring Boots Damage Reduction Power Cost (Minimum)", typeof(float), 16, 0, 512, 0)]FALL_BOOT_COST_MIN,
-			[ConfigEntry("Spring Boots Damage Reduction Power Cost (Maximum)", typeof(float), 64, 0, 512, 0)]FALL_BOOT_COST_MAX,
 			[ConfigEntry("Hopper Gear Cost", typeof(int), 6, 1, 100, 10)]HOPPER_COST,
-			[ConfigEntry("Threat Reducer Effectivity", typeof(float), 1, 0, 100, 1)]CALMER_STRENGTH,
-			[ConfigEntry("Threat Agitator Effectivity", typeof(float), 1, 0, 100, 1)]AGITATOR_STRENGTH,
 			[ConfigEntry("Cheaper Induction Chargers", true)]CHEAP_INDUCTION,
+			[ConfigEntry("Keep Tricky 500/100 OT Hoppers Before FF", true)]CHEAP_TRICKY_OT,
+			[ConfigEntry("Headlight Module Efficiency Factor", typeof(float), 6, 1, 100, 2)]HEADLIGHT_MODULE_EFFECT,
+			[ConfigEntry("Make T4 turrets need fewer massive eyes (9 like the comment says instead of 18)", true)]CHEAPER_MK4_TURRET,
+			[ConfigEntry("Buffed Mk4 Turret PPS Cost (Only applies if that mod is installed)", typeof(float), 12000, 1, 5000000, 37800)]MK4_TURRET_PPS,
 		}
 	}
 }

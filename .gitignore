@@ -36,3 +36,4 @@ $RECYCLE.BIN/
 *.dll
 *.sln
 *.bak
+*.log
