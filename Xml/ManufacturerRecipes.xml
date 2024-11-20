@@ -75,7 +75,7 @@
 	</CraftData>
 	<CraftData>
 		<Key>ReikaKalseki.LogiFalcorDowngrade</Key>
-		<Category>consumables</Category>
+		<Category>logistics</Category>
 		<Tier>1</Tier>
 		<CraftedKey>MadVandal.FTNTransitFALCORMK1_Key</CraftedKey>
 		<CraftedAmount>1</CraftedAmount>

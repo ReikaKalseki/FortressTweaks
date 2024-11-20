@@ -158,7 +158,7 @@ namespace ReikaKalseki.FortressTweaks {
 			try {
 				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
 				int loc = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Call, typeof(TerrainData), "GetHardness", false, new Type[]{typeof(ushort), typeof(ushort)});
-				loc = InstructionHandlers.getInstruction(codes, loc, 0, OpCodes.Ldc_I4);
+				loc = InstructionHandlers.getInstruction(codes, loc, 0, OpCodes.Ldc_I4, 168);
 				FileLog.Log("Found match at pos "+InstructionHandlers.toString(codes, loc));
 				codes[loc] = InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "isCubeGeoPassable", false, new Type[]{typeof(ushort), typeof(GeothermalGenerator)});
 				codes[loc+1].opcode = OpCodes.Brfalse;
@@ -940,6 +940,84 @@ namespace ReikaKalseki.FortressTweaks {
 		}
 	}
 	*/
+
+	[HarmonyPatch(typeof(RefineryController))]
+	[HarmonyPatch("RegisterVat")]
+	public static class RefineryVatLinkHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				InstructionHandlers.patchEveryReturnPre(codes, new CodeInstruction(OpCodes.Ldarg_0), new CodeInstruction(OpCodes.Ldarg_1), InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "onVatLinked", false, new Type[]{typeof(RefineryController), typeof(RefineryReactorVat)}));
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+
+	[HarmonyPatch(typeof(SurvivalDigScript))]
+	[HarmonyPatch("DoNonOreDig")]
+	public static class PasteDropAmountHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				int idx = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldc_I4, 652); //load paste ID
+				idx += 3; //amt
+				codes[idx] = InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "getPasteDropCount", false, new Type[]{typeof(ushort), typeof(ushort)});
+				List<CodeInstruction> add = new List<CodeInstruction>{
+					new CodeInstruction(OpCodes.Ldarg_0),
+					new CodeInstruction(OpCodes.Ldfld, InstructionHandlers.convertFieldOperand(typeof(SurvivalDigScript), "mDigTarget")),
+					new CodeInstruction(OpCodes.Ldarg_0),
+					new CodeInstruction(OpCodes.Ldfld, InstructionHandlers.convertFieldOperand(typeof(SurvivalDigScript), "mVal")),
+				};
+				codes.InsertRange(idx, add);
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+
+	[HarmonyPatch(typeof(T3_FuelCompressor))]
+	[HarmonyPatch("SetNewState")]
+	public static class FuelCompressorCycleDurationHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				int idx = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Stfld, typeof(T3_FuelCompressor), "mrWorkTimer");
+				codes.InsertRange(idx, new List<CodeInstruction>{
+					new CodeInstruction(OpCodes.Ldarg_0),
+					new CodeInstruction(OpCodes.Ldarg_0),
+					new CodeInstruction(OpCodes.Ldfld, InstructionHandlers.convertFieldOperand(typeof(T3_FuelCompressor), "mnCoalStored")),
+					new CodeInstruction(OpCodes.Ldarg_0),
+					new CodeInstruction(OpCodes.Ldfld, InstructionHandlers.convertFieldOperand(typeof(T3_FuelCompressor), "mnHEFCStored")),
+					InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "getFuelCompressorCycleTime", false, new Type[]{typeof(T3_FuelCompressor), typeof(int), typeof(int)})
+				});
+				codes.RemoveAt(idx-1); //load 15
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
 	
 	static class Lib {
 		

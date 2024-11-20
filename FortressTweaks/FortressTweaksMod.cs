@@ -17,6 +17,8 @@ namespace ReikaKalseki.FortressTweaks
     
     private static Config<FTConfig.ConfigEntries> config;
     
+    private static readonly Dictionary<ushort, PasteCostCache> pasteCostCache = new Dictionary<ushort, PasteCostCache>();
+    
     public FortressTweaksMod() : base("FortressTweaks") {
     	config = new Config<FTConfig.ConfigEntries>(this);
     }
@@ -69,6 +71,30 @@ namespace ReikaKalseki.FortressTweaks
 			});
         	FUtil.log("Patch to "+t.Name+" complete.");
 		}
+        
+        //makes them drop as paste
+        for (int i = eCubeTypes.CanvasYellow; i < eCubeTypes.CanvasBlack; i++) {
+	        CubeHelper.maCategory[i] = MaterialCategories.Decoration;
+	        TerrainData.mEntries[i].Category = MaterialCategories.Decoration;
+        }
+        for (int i = eCubeTypes.CanvasPlum; i < eCubeTypes.CanvasMaroon; i++) {
+	        CubeHelper.maCategory[i] = MaterialCategories.Decoration;
+	        TerrainData.mEntries[i].Category = MaterialCategories.Decoration;
+        }
+        
+        foreach (List<CraftData> li in CraftData.mRecipesForSet.Values) {
+        	foreach (CraftData rec in li) {
+        		if (rec.Costs.Count == 1 && rec.Costs[0].Key == "ConstructionPaste" && rec.CraftableCubeType > 1) {
+        			PasteCostCache cc;
+        			if (!pasteCostCache.TryGetValue(rec.CraftableCubeType, out cc)) {
+        				cc = new PasteCostCache(rec.CraftableCubeType);
+        				pasteCostCache[rec.CraftableCubeType] = cc;
+        			}
+        			cc.costs[rec.CraftableCubeValue] = (int)rec.Costs[0].Amount;
+        			FUtil.log("Caching paste cost of "+rec.Key+" (makes "+TerrainData.mEntries[rec.CraftableCubeType].Name+") - x"+rec.Costs[0].Amount);
+        		}
+        	}
+        }
         
         CubeHelper.mabIsCubeTypeGlass[eCubeTypes.EnergyGrommet] = true;
         CubeHelper.mabIsCubeTypeGlass[eCubeTypes.LogisticsGrommet] = true;
@@ -127,6 +153,19 @@ namespace ReikaKalseki.FortressTweaks
     		RecipeUtil.addIngredient(rec, "IronGear", 4);
     		RecipeUtil.addIngredient(rec, "LightweightMachineHousing", 1);
 	    }
+    	
+    	RecipeUtil.addUncrafting("laser_mk3_new", "Uncrafting LPT3");
+    	RecipeUtil.addUncrafting("PSB_mk3_Alt", "Uncrafting PSB3", "AlloyedMachineBlock");
+    	RecipeUtil.addUncrafting("PSB mk4", "Uncrafting PSB4");
+    	RecipeUtil.addUncrafting("PSB mk5", "Uncrafting PSB5");
+    	
+    	foreach (CraftData rec in RecipeUtil.getRecipesFor("ThreatReducer")) {
+    		RecipeUtil.removeIngredient(rec, "CopperBar");
+    		RecipeUtil.removeIngredient(rec, "FortifiedPCB");
+    		RecipeUtil.addIngredient(rec, "BasicPCB", 6);
+    		RecipeUtil.addIngredient(rec, "IronGear", 4);
+    		RecipeUtil.addIngredient(rec, "LightweightMachineHousing", 1);
+	    }
         
     	int hopp = config.getInt(FTConfig.ConfigEntries.HOPPER_COST);
         if (hopp != 10) { //skip doing if vanilla
@@ -152,20 +191,24 @@ namespace ReikaKalseki.FortressTweaks
         
         if (config.getBoolean(FTConfig.ConfigEntries.AMPULEUNDO)) {
         	for (int i = 1; i <= 5; i++) {
-        		CraftData rec = RecipeUtil.addRecipe("AmpuleUncraft"+i, "Seed_UnderGrump", "consumables", 8*i);
-        		rec.Tier = 1;
-        		rec.CanCraftAnywhere = true;
-        		rec.Description = "Uncrafting MK"+i+" ampules.";
-        		RecipeUtil.addIngredient(rec, "AmpuleMK"+i, 1);
-        		RecipeUtil.addResearch(rec, "Rooms_Herb");
+    			RecipeUtil.addRecipe("AmpuleUncraft"+i, "Seed_UnderGrump", "consumables", 8*i, init: rec => {
+	        		rec.Tier = 1;
+	        		rec.CanCraftAnywhere = true;
+	        		rec.Description = "Uncrafting MK"+i+" ampules.";
+	        		RecipeUtil.addIngredient(rec, "AmpuleMK"+i, 1);
+	        		RecipeUtil.addResearch(rec, "Rooms_Herb");
+				});
         	}
         }
         
     	int braincost = config.getInt(FTConfig.ConfigEntries.HIVE_BRAIN);
         if (braincost > 0) {
-        	CraftData rec = RecipeUtil.addRecipe("RecombinedBrain", "HiveBrainMatter", "CraftingIngredient", 1);
-        	rec.CanCraftAnywhere = true;
-        	RecipeUtil.addIngredient(rec, "RecombinedOrganicMatter", (uint)braincost);
+    		RecipeUtil.addRecipe("RecombinedBrain", "HiveBrainMatter", "craftingingredient", 1, init: rec => {
+        		RecipeUtil.addIngredient(rec, "RecombinedOrganicMatter", (uint)braincost);
+        		rec.ResearchRequirements.Add("Cyrogenics Research"); //yes it is mispelled
+    			rec.CanCraftAnywhere = true;
+    			rec.ResearchCost = config.getInt(FTConfig.ConfigEntries.HIVE_BRAIN_CRAFT_RPOINTS);
+    		});
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.T2LIFT)) {
@@ -186,8 +229,8 @@ namespace ReikaKalseki.FortressTweaks
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.PODUNCRAFT)) {
-			string folder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-			string path = System.IO.Path.Combine(folder, "Xml/PodUncrafting.xml");
+			string folder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+			string path = Path.Combine(folder, "Xml/PodUncrafting.xml");
         	List<OverrideCraftData> li = (List<OverrideCraftData>)XMLParser.ReadXML(path, typeof(List<OverrideCraftData>));
         	foreach (OverrideCraftData data in li) {
         		CraftData rec = data.ToStandardFormat();
@@ -234,6 +277,16 @@ namespace ReikaKalseki.FortressTweaks
     	float power = Math.Min(filter.mrCurrentPower, Math.Max(0, (ratio-1)*10)); //extra 10PPS for each 1x increase
     	filter.mrCurrentPower -= power; 
     	return (int)(orig*ratio);
+    }
+    
+    public static float getFuelCompressorCycleTime(T3_FuelCompressor com, int coal, int hecf) {
+    	if (!config.getBoolean(FTConfig.ConfigEntries.FUELCOM_SPEED))
+    		return T3_FuelCompressor.WORK_TIME;
+    	float fPwr = com.mrCurrentPower/com.mrMaxPower;
+    	float fCoal = coal/(float)T3_FuelCompressor.MAX_COAL;
+    	float fFuel = hecf/(float)T3_FuelCompressor.MAX_HEFC;
+    	float bonus = Mathf.Clamp01(fPwr*0.6F+fCoal*0.3F+fFuel*0.1F)*0.8F;
+    	return T3_FuelCompressor.WORK_TIME*(1-bonus);
     }
     
     public static bool isCubeGeoPassable(ushort ID, GeothermalGenerator gen) {
@@ -317,6 +370,7 @@ namespace ReikaKalseki.FortressTweaks
     	float scale = config.getFloat(FTConfig.ConfigEntries.MATTERMITTER_RANGE_FACTOR);
     	double fac = Math.Abs(scale-1) <= 0.01 ? 1 : Math.Pow(scale, tier);
     	int range = (int)(64*fac-tier*drop);
+    	//FUtil.log("Setting MM "+tier+" range to "+range+", 64*"+fac.ToString("0.00")+"-"+(tier*drop));
     	mm.mnMaxTransmitDistance = range;
     }
     
@@ -404,6 +458,31 @@ namespace ReikaKalseki.FortressTweaks
     
     public static float getHeadlightEffect() {
     	return config.getFloat(FTConfig.ConfigEntries.HEADLIGHT_MODULE_EFFECT);
+    }
+    
+    public static void onVatLinked(RefineryController c, RefineryReactorVat vat) {
+    	FUtil.log("Linked refinery controller "+new Coordinate(c)+" to vat "+new Coordinate(vat)+", list = ["+string.Join(", ", c.mConnectedVats.Select(v => new Coordinate(v).ToString()).ToArray())+"]");
+    }
+    
+    public static int getPasteDropCount(ushort id, ushort value) {
+    	int ret = 1;
+    	PasteCostCache cache;
+    	if (pasteCostCache.TryGetValue(id, out cache)) {
+    		cache.costs.TryGetValue(value, out ret);
+    	}
+    	return ret;
+    }
+    
+    class PasteCostCache {
+    	
+    	public readonly ushort blockID;
+    	
+    	internal readonly Dictionary<ushort, int> costs = new Dictionary<ushort, int>();
+    	
+    	internal PasteCostCache(ushort id) {
+    		blockID = id;
+    	}
+    	
     }
 
   }
