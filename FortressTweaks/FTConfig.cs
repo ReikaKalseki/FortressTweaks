@@ -19,8 +19,6 @@ namespace ReikaKalseki.FortressTweaks
 			[ConfigEntry("Allow geo pipe to pass through T5 ores", true)]GEO_PIPE_PASS,
 			[ConfigEntry("Allow Mk3 Build Gun full grapple functionality in all caverns", true)]GRAPPLE_COOLDOWN,
 			[ConfigEntry("PSB sharing boost from large to small", typeof(float), 1, 0, 10, 0)]PSB_SHARE,
-			[ConfigEntry("Enable post-overmind anti-worm OET strikes", true)]OET,
-			[ConfigEntry("Low-power anti-worm OET strike power cost", typeof(int), 2000000, 1, 100000000, 100000000)]OET_WEAK_COST,
 			[ConfigEntry("Make outer airlocks optional", false)]AIRLOCK,//*
 			[ConfigEntry("Mattermitter range reduction factor by tier", typeof(float), 0.5F, 0, 1, 0.5F)]MATTERMITTER_RANGE_FACTOR,
 			[ConfigEntry("Mattermitter range flat reduction by tier", typeof(int), 0, 0, 64, 0)]MATTERMITTER_RANGE_DROP,
