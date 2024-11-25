@@ -204,6 +204,41 @@ namespace ReikaKalseki.FortressTweaks {
 		}
 	}
 	
+	[HarmonyPatch(typeof(T4_Grinder))]
+	[HarmonyPatch("LowFrequencyUpdate")]
+	public static class GrinderSpeedPatch {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				CodeInstruction[] pattern = new CodeInstruction[]{
+					new CodeInstruction(OpCodes.Ldfld, InstructionHandlers.convertFieldOperand(typeof(T4_Grinder), "GrindTimer")),
+					new CodeInstruction(OpCodes.Ldsfld, InstructionHandlers.convertFieldOperand(typeof(LowFrequencyThread), "mrPreviousUpdateTimeStep")),
+					new CodeInstruction(OpCodes.Add),
+					new CodeInstruction(OpCodes.Stfld, InstructionHandlers.convertFieldOperand(typeof(T4_Grinder), "GrindTimer")),
+				};
+				for (int i = 0; i < codes.Count; i++) {
+					if (InstructionHandlers.matchPattern(codes, i, pattern)) {
+						FileLog.Log("Hooking GrindTimer increment @ "+i);
+						codes.InsertRange(i+2, new List<CodeInstruction>(){
+							new CodeInstruction(OpCodes.Ldarg_0),
+							InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "getHRGSpeed", false, new Type[]{typeof(float), typeof(T4_Grinder)})
+						});
+					}
+				}
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
 	[HarmonyPatch(typeof(T4_ParticleCompressor))]
 	[HarmonyPatch("LowFrequencyUpdate")]
 	public static class CompressorSpeedPatch {
@@ -545,6 +580,7 @@ namespace ReikaKalseki.FortressTweaks {
 						FieldInfo fi = (FieldInfo)ci.operand;
 						if (fi.Name == "mrMaxPower" || fi.Name == "mrMaxTransferRate") {
 							codes[i-1].operand = fi.Name == "mrMaxPower" ? through/4F : (float)through; //transfer +50% and storage 6.5x to fix the difficulty-based scaling
+							//does not need to account for difficulty as that is applied during LFU
 						}
 					}
 				}

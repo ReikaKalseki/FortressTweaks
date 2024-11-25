@@ -183,6 +183,13 @@ namespace ReikaKalseki.FortressTweaks
 	        }
         }
         
+        if (config.getBoolean(FTConfig.ConfigEntries.EARLIER_CONDUIT)) {
+	        foreach (CraftData rec in RecipeUtil.getRecipesFor("ConduitPlacement")) { //includes the T4 turret to conduit one added by this mod
+	        	RecipeUtil.removeResearch(rec, "T4_GTPower");
+	        	RecipeUtil.addResearch(rec, "T4 ore extracting");
+	        }
+        }
+        
         if (config.getBoolean(FTConfig.ConfigEntries.CHEAPER_MK4_TURRET)) {
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("T4EnergyTurretPlacement")) {
 	        	RecipeUtil.modifyIngredientCount(rec, "ExceptionalOrganicLens", 1); //was 2
@@ -277,6 +284,24 @@ namespace ReikaKalseki.FortressTweaks
     	float power = Math.Min(filter.mrCurrentPower, Math.Max(0, (ratio-1)*10)); //extra 10PPS for each 1x increase
     	filter.mrCurrentPower -= power; 
     	return (int)(orig*ratio);
+    }
+    
+    public static float getHRGSpeed(float incr, T4_Grinder grinder) {
+    	if (!config.getBoolean(FTConfig.ConfigEntries.HRG_SPEED))
+    		return incr;
+    	float f = grinder.mrCurrentPower/grinder.mrMaxPower;
+    	float boost = 0;
+    	const float maxBoost = 4F; //goes from 10 min to 2.5
+    	if (f >= 0.5F) {
+    		boost = (f-0.5F)*2F*maxBoost;
+    		incr *= 1+boost;
+    	}
+    	float pps = config.getFloat(FTConfig.ConfigEntries.HRG_PPS);
+    	if (pps > 512) {
+	    	grinder.mrMaxPower = Mathf.Max(grinder.mrMaxPower, pps*8);
+	    	grinder.mrCurrentPower -= Mathf.Lerp(boost/maxBoost, 0, pps-512); //subtract extra power, linearly
+    	}
+    	return incr;
     }
     
     public static float getFuelCompressorCycleTime(T3_FuelCompressor com, int coal, int hecf) {

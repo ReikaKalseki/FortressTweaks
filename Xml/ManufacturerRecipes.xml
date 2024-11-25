@@ -190,4 +190,51 @@
 		</ResearchRequirements>
 		<CanCraftAnywhere>true</CanCraftAnywhere>
 	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.T4TurretToConduit</Key>
+		<Category>powertransmission</Category>
+		<Tier>4</Tier>
+		<CraftedKey>ConduitPlacement</CraftedKey>
+		<CraftedAmount>3</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>T4EnergyTurretPlacement</Key>
+				<Amount>7</Amount>
+			</CraftCost>
+			<CraftCost>
+				<Key>PolishedChromeLens</Key>
+				<Amount>1</Amount>
+			</CraftCost>
+		</Costs>
+		<ResearchRequirements>
+			<Research>T4_GTPower</Research>
+			<Research>T4_start</Research>
+		</ResearchRequirements>
+		<Description>Fires up to 10,000 PPS, equalising power between batteries. Do not look directly into beam.</Description>
+		<Hint>Do not stand directly in beam.</Hint>
+		<ResearchCost>8</ResearchCost>
+	</CraftData>
+	<CraftData>
+		<Key>ReikaKalseki.T3TurretToT3LPT</Key>
+		<Category>powertransmission</Category>
+		<Tier>2</Tier>
+		<CraftedKey>LaserEnergyTransmitterMK3</CraftedKey>
+		<CraftedAmount>1</CraftedAmount>
+		<Costs>
+			<CraftCost>
+				<Key>TurretMK3</Key>
+				<Amount>7</Amount>
+			</CraftCost>
+		</Costs>
+		<Description>Transmits power at a high rate from a generator or battery up to 64m. Can power a machine, battery or another transmitter. Attach to a wall to send power vertically.</Description>
+		<Hint>The largest single-block energy transmitter.</Hint>
+		<ScanRequirements>
+			<Scan>GoldOre</Scan>
+		</ScanRequirements>
+		<ResearchRequirements>
+			<Research>T4 Power</Research>
+			<Research>alloys</Research>
+		</ResearchRequirements>
+		<CanCraftAnywhere>true</CanCraftAnywhere>
+	</CraftData>
 </ArrayOfCraftData>	
