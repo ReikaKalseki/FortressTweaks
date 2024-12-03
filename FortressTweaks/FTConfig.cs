@@ -24,6 +24,7 @@ namespace ReikaKalseki.FortressTweaks
 			[ConfigEntry("Make outer airlocks optional", false)]AIRLOCK,//*
 			[ConfigEntry("Mattermitter range reduction factor by tier", typeof(float), 0.5F, 0, 1, 0.5F)]MATTERMITTER_RANGE_FACTOR,
 			[ConfigEntry("Mattermitter range flat reduction by tier", typeof(int), 0, 0, 64, 0)]MATTERMITTER_RANGE_DROP,
+			[ConfigEntry("Mattermitter cost scales with travel distance", true)]MATTERMITTER_COST_SCALE,
 			//*/
 			//[ConfigEntry("Mattermitter ranges by tier", typeof(int), 0, 0, 64, 0)]MATTERMITTER_RANGES,
 			[ConfigEntry("Casting pipe max range", typeof(int), 96, 16, 256, 31)]CASTING_PIPE,
@@ -39,10 +40,12 @@ namespace ReikaKalseki.FortressTweaks
 			[ConfigEntry("Forced Induction Mk5 cost in Mk4s", typeof(int), 4, 1, 128, 8)]FI_5_COST4,
 			[ConfigEntry("Reduce ARC Smelter Upgrade material cost", false)]CHEAP_ARC,
 			[ConfigEntry("Move V3 build gun to early FF", true)]EARLIER_V3_GUN,
+			[ConfigEntry("Move V3 build gun to FF start (overrides early FF option)", true)]BEGIN_FF_V3_GUN,
 			[ConfigEntry("Move Conduit to early FF", true)]EARLIER_CONDUIT,
 			[ConfigEntry("Keep pre-FF CC music", true)]FF_MUSIC,
 			[ConfigEntry("Hive Brain Cost From Recombined Matter (Zero To Disable)", typeof(int), 60, 0, 32767, 0)]HIVE_BRAIN,
 			[ConfigEntry("Hive Brain From Recombined Matter RP Cost", typeof(int), 10, 0, 50, 10)]HIVE_BRAIN_CRAFT_RPOINTS,
+			[ConfigEntry("Hive Brain RP Value", typeof(int), 25, 2, 200, 10)]HIVE_BRAIN_RPOINTS,
 			[ConfigEntry("Enable Ampule Uncrafting To Seeds", true)]AMPULEUNDO,
 			[ConfigEntry("Enable Heimal Geothermal Crafting", true)]GEOHEIM,
 			[ConfigEntry("Make T2 cargo lift cheaper", true)]T2LIFT,
@@ -50,10 +53,15 @@ namespace ReikaKalseki.FortressTweaks
 			[ConfigEntry("Disable slime ore drops", false)]SLIMEORE,
 			[ConfigEntry("Hopper Gear Cost", typeof(int), 6, 1, 100, 10)]HOPPER_COST,
 			[ConfigEntry("Cheaper Induction Chargers", true)]CHEAP_INDUCTION,
-			[ConfigEntry("Keep Tricky 500/1000 OT Hoppers Before FF", true)]CHEAP_TRICKY_OT,
+			[ConfigEntry("Move Tricky OT Hoppers Earlier In Progression (starting in late T2) when using its balanced recipe addon mod", true)]EARLIER_TRICKY_OT,
 			[ConfigEntry("Headlight Module Efficiency Factor", typeof(float), 6, 1, 100, 2)]HEADLIGHT_MODULE_EFFECT,
 			[ConfigEntry("Make T4 turrets need fewer massive eyes (9 like the comment says instead of 18)", true)]CHEAPER_MK4_TURRET,
 			[ConfigEntry("Buffed Mk4 Turret PPS Cost (Only applies if that mod is installed)", typeof(float), 12000, 1, 5000000, 37800)]MK4_TURRET_PPS,
+			[ConfigEntry("Tier 1 Trencher Drill Model", typeof(int), 1, 1, 3, 1)]TRENCHER_1_MODEL,
+			[ConfigEntry("Tier 2 Trencher Drill Model", typeof(int), 3, 1, 3, 2)]TRENCHER_2_MODEL,
+			[ConfigEntry("Tier 3 Trencher Drill Model", typeof(int), 2, 1, 3, 3)]TRENCHER_3_MODEL,
+			//[ConfigEntry("Cargo Lift Rail Building PPS Cost", typeof(float), 50, 1, 5000000, 100)]LIFT_RAIL_PPS,
+			[ConfigEntry("Cargo Lift Rail Check PPS Cost", typeof(float), 10, 1, 1000, 10)]LIFT_CHECK_PPS,
 		}
 	}
 }

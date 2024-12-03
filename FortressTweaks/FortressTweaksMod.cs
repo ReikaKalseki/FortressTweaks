@@ -27,39 +27,12 @@ namespace ReikaKalseki.FortressTweaks
     	return config;
     }
 
-    public override ModRegistrationData Register()
-    {
-        ModRegistrationData registrationData = new ModRegistrationData();
-        //registrationData.RegisterEntityHandler(MOD_KEY);
-        /*
-        TerrainDataEntry entry;
-        TerrainDataValueEntry valueEntry;
-        TerrainData.GetCubeByKey(CUBE_KEY, out entry, out valueEntry);
-        if (entry != null)
-          ModCubeType = entry.CubeType;
-         */        
-        
-        int all = 0;
-        int failed = 0;
-        List<string> success = new List<string>();
-        foreach (System.Reflection.Assembly a in AppDomain.CurrentDomain.GetAssemblies()) {
-        	all++;
-        	try {
-        		FUtil.log("Testing assembly "+a.FullName);
-        		FUtil.log("Location @ "+a.Location);
-        		int amt = a.GetTypes().Length;
-        		FUtil.log("Found "+amt+" classes.");
-        		success.Add(a.Location);
-        	}
-        	catch (Exception e) {
-        		FUtil.log("Threw exception on access: "+e);
-        		failed++;
-        	}
-        }
-        FUtil.log("Failed to parse "+failed+"/"+all+" assemblies");
-        FUtil.log("Successes:\n"+string.Join("\n", success.ToArray()));
+    protected override void loadMod(ModRegistrationData registrationData) {
+    	validateDLLs();
         
         config.load();
+        
+        PersistentData.load(Path.Combine(Path.GetDirectoryName(modDLL.Location), "persistent.dat"));
         
         runHarmony();
         
@@ -82,18 +55,33 @@ namespace ReikaKalseki.FortressTweaks
 	        TerrainData.mEntries[i].Category = MaterialCategories.Decoration;
         }
         
+        //fix snow invisible bottom
+        TerrainData.mEntries[21].BottomTexture = 12; //was 2, typo?
+        
         foreach (List<CraftData> li in CraftData.mRecipesForSet.Values) {
         	foreach (CraftData rec in li) {
         		if (rec.Costs.Count == 1 && rec.Costs[0].Key == "ConstructionPaste" && rec.CraftableCubeType > 1) {
         			PasteCostCache cc;
+        			int amt = (int)rec.Costs[0].Amount;
         			if (!pasteCostCache.TryGetValue(rec.CraftableCubeType, out cc)) {
         				cc = new PasteCostCache(rec.CraftableCubeType);
         				pasteCostCache[rec.CraftableCubeType] = cc;
+        				cc.anyCost = amt;
         			}
-        			cc.costs[rec.CraftableCubeValue] = (int)rec.Costs[0].Amount;
-        			FUtil.log("Caching paste cost of "+rec.Key+" (makes "+TerrainData.mEntries[rec.CraftableCubeType].Name+") - x"+rec.Costs[0].Amount);
+        			cc.costs[rec.CraftableCubeValue] = amt;
+        			FUtil.log("Caching paste cost of '"+rec.Key+"' (makes "+TerrainData.mEntries[rec.CraftableCubeType].Name+") ID["+rec.CraftableCubeType+"/"+rec.CraftableCubeValue+"] - x"+rec.Costs[0].Amount);
         		}
         	}
+        }
+        
+        TerrainDataValueEntry[] trencherDrills = new TerrainDataValueEntry[]{
+	        TerrainData.mEntries[eCubeTypes.MachinePlacementBlock].Values[12],
+	        TerrainData.mEntries[eCubeTypes.MachinePlacementBlock].Values[34],
+	        TerrainData.mEntries[eCubeTypes.MachinePlacementBlock].Values[35]
+        };
+        string[] trencherDrillIcons = trencherDrills.Select(e => e.IconName).ToArray();
+        for (int i = 0; i < 3; i++) {
+        	trencherDrills[i].IconName = trencherDrillIcons[getTrencherVisual(i)-1];
         }
         
         CubeHelper.mabIsCubeTypeGlass[eCubeTypes.EnergyGrommet] = true;
@@ -107,51 +95,83 @@ namespace ReikaKalseki.FortressTweaks
         T3_FuelCompressor.MAX_HIGHOCTANE = config.getInt(FTConfig.ConfigEntries.HOF_CACHE);
         
         applyRecipeChanges();
-        
-        return registrationData;
+    }
+    
+    private void validateDLLs() {
+		int all = 0;
+        int failed = 0;
+        List<string> success = new List<string>();
+        foreach (System.Reflection.Assembly a in AppDomain.CurrentDomain.GetAssemblies()) {
+        	all++;
+        	try {
+        		FUtil.log("Testing assembly "+a.FullName);
+        		FUtil.log("Location @ "+a.Location);
+        		int amt = a.GetTypes().Length;
+        		FUtil.log("Found "+amt+" classes.");
+        		success.Add(a.Location);
+        	}
+        	catch (Exception e) {
+        		FUtil.log("Threw exception on access: "+e);
+        		failed++;
+        	}
+        }
+        FUtil.log("Failed to parse "+failed+"/"+all+" assemblies");
+        FUtil.log("Successes:\n"+string.Join("\n", success.ToArray()));
     }
     
     private void applyRecipeChanges() {
     	foreach (CraftData rec in RecipeUtil.getRecipesFor("ForcedInductionMK5")) {
-        	RecipeUtil.modifyIngredientCount(rec, "ForcedInductionMK4", (uint)config.getInt(FTConfig.ConfigEntries.FI_5_COST4)); //was 8
+        	rec.modifyIngredientCount("ForcedInductionMK4", (uint)config.getInt(FTConfig.ConfigEntries.FI_5_COST4)); //was 8
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.CHEAP_ARC)) {
+    		uint n = 2;
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("ForcedInductionMK6")) { //ARC upgrade
-	        	RecipeUtil.modifyIngredientCount(rec, "AlloyedMachineBlock", 16); //was 512
-	        	RecipeUtil.modifyIngredientCount(rec, "PowerBoosterMK5", 5); //was 2
+	        	rec.modifyIngredientCount("AlloyedMachineBlock", 16*n); //was 512
+	        	rec.modifyIngredientCount("PowerBoosterMK5", 5*n); //was 2
+	        	rec.CraftedAmount *= 2;
 	        }
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.CHEAP_INDUCTION)) {
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("InductionChargerPlacement")) {
-	        	RecipeUtil.removeIngredient(rec, "PowerStorageMK2");
-	        	//RecipeUtil.modifyIngredientCount(rec, "PowerBoosterMK2", 5); //was 5
-    			RecipeUtil.addIngredient(rec, "PowerStorageMK1", 5);
+	        	rec.removeIngredient("PowerStorageMK2");
+	        	//rec.modifyIngredientCount("PowerBoosterMK2", 5); //was 5
+    			rec.addIngredient("PowerStorageMK1", 5);
 	        }
         }
         
-        if (config.getBoolean(FTConfig.ConfigEntries.CHEAP_TRICKY_OT)) {
+        if (config.getBoolean(FTConfig.ConfigEntries.EARLIER_TRICKY_OT)) {
     		CraftData rec = RecipeUtil.getRecipeByKey("Tricky.1000SlotHopperx");
-    		if (rec != null) {
-    			CraftCost ing = RecipeUtil.removeIngredient(rec, "ImbuedMachineBlock");
-    			if (ing != null)
-    				RecipeUtil.addIngredient(rec, "PlasticPellet", ing.Amount*5);
-    		}
+    		if (rec != null)
+    			rec.replaceIngredient("ImbuedMachineBlock", "PlasticPellet", 5);
     		rec = RecipeUtil.getRecipeByKey("Tricky.2000SlotHopperx");
+    		if (rec != null)
+    			rec.replaceIngredient("ImbuedMachineBlock", "PlasticPellet", 10);
+    		rec = RecipeUtil.getRecipeByKey("Tricky.2000SlotHopperx");
+    		if (rec != null)
+    			rec.replaceIngredient("ImbuedMachineBlock", "PlasticPellet", 10);
+    		rec = RecipeUtil.getRecipeByKey("Tricky.3000SlotHopperx");
     		if (rec != null) {
-    			CraftCost ing = RecipeUtil.removeIngredient(rec, "ImbuedMachineBlock");
-    			if (ing != null)
-    				RecipeUtil.addIngredient(rec, "PlasticPellet", ing.Amount*10);
+    			bool integrated = ItemEntry.mEntriesByKey["ReikaKalseki.ChromiumPCB"] != null;
+    			rec.replaceIngredient("ChromedMachineBlock", integrated ? "ReikaKalseki.ChromiumPCB" : "ChromiumBar", 2);
+    			rec.replaceIngredient("MagneticMachineBlock", integrated ? "ReikaKalseki.MolybdenumPCB" : "MolybdenumBar", 2);
+    			rec.removeIngredient("CompressedSulphur");
+    			if (rec.removeIngredient("UltimatePCB") != null)
+    				rec.addItemPerN("UltimatePCB", 2);
+    		}
+    		rec = RecipeUtil.getRecipeByKey("Tricky.5000SlotHopperx");
+    		if (rec != null) {
+    			rec.replaceIngredient("CompressedSulphur", "CompressedFreon", 5/3F); //from 30 to 50
     		}
         }
     	
     	foreach (CraftData rec in RecipeUtil.getRecipesFor("ThreatReducer")) {
-    		RecipeUtil.removeIngredient(rec, "CopperBar");
-    		RecipeUtil.removeIngredient(rec, "FortifiedPCB");
-    		RecipeUtil.addIngredient(rec, "BasicPCB", 6);
-    		RecipeUtil.addIngredient(rec, "IronGear", 4);
-    		RecipeUtil.addIngredient(rec, "LightweightMachineHousing", 1);
+    		rec.removeIngredient("CopperBar");
+    		rec.removeIngredient("FortifiedPCB");
+    		rec.addIngredient("BasicPCB", 6);
+    		rec.addIngredient("IronGear", 4);
+    		rec.addIngredient("LightweightMachineHousing", 1);
 	    }
     	
     	RecipeUtil.addUncrafting("laser_mk3_new", "Uncrafting LPT3");
@@ -159,40 +179,41 @@ namespace ReikaKalseki.FortressTweaks
     	RecipeUtil.addUncrafting("PSB mk4", "Uncrafting PSB4");
     	RecipeUtil.addUncrafting("PSB mk5", "Uncrafting PSB5");
     	
+    	RecipeUtil.addUncrafting("forced induction6", "Uncrafting Arc Smelter", "ForcedInductionMK5");
+    	
     	foreach (CraftData rec in RecipeUtil.getRecipesFor("ThreatReducer")) {
-    		RecipeUtil.removeIngredient(rec, "CopperBar");
-    		RecipeUtil.removeIngredient(rec, "FortifiedPCB");
-    		RecipeUtil.addIngredient(rec, "BasicPCB", 6);
-    		RecipeUtil.addIngredient(rec, "IronGear", 4);
-    		RecipeUtil.addIngredient(rec, "LightweightMachineHousing", 1);
+    		rec.Costs.Clear();
+    		rec.addIngredient("BasicPCB", 6);
+    		rec.addIngredient("IronGear", 4);
+    		rec.addIngredient("LightweightMachineHousing", 1);
 	    }
         
     	int hopp = config.getInt(FTConfig.ConfigEntries.HOPPER_COST);
         if (hopp != 10) { //skip doing if vanilla
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("StorageHopper")) {
-    			RecipeUtil.modifyIngredientCount(rec, "IronGear", (uint)hopp);
+    			rec.modifyIngredientCount("IronGear", (uint)hopp);
 	        }
         }
         
-        if (config.getBoolean(FTConfig.ConfigEntries.EARLIER_V3_GUN)) {
+        if (config.getBoolean(FTConfig.ConfigEntries.EARLIER_V3_GUN) || config.getBoolean(FTConfig.ConfigEntries.BEGIN_FF_V3_GUN)) {
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("BuildGunV3")) {
-	        	RecipeUtil.modifyIngredientCount(rec, "MolybdenumBar", 256); //was 1024
-	        	RecipeUtil.modifyIngredientCount(rec, "ChromiumBar", 256); //was 1024
-	        	RecipeUtil.removeResearch(rec, "T4_MagmaBore");
-	        	RecipeUtil.addResearch(rec, "T4_drills_2");
+	        	rec.modifyIngredientCount("MolybdenumBar", 256); //was 1024
+	        	rec.modifyIngredientCount("ChromiumBar", 256); //was 1024
+	        	rec.removeResearch("T4_MagmaBore");
+	        	rec.addResearch(config.getBoolean(FTConfig.ConfigEntries.BEGIN_FF_V3_GUN) ? "T4 ore extracting" : "T4_drills_2");
 	        }
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.EARLIER_CONDUIT)) {
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("ConduitPlacement")) { //includes the T4 turret to conduit one added by this mod
-	        	RecipeUtil.removeResearch(rec, "T4_GTPower");
-	        	RecipeUtil.addResearch(rec, "T4 ore extracting");
+	        	rec.removeResearch("T4_GTPower");
+	        	rec.addResearch("T4 ore extracting");
 	        }
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.CHEAPER_MK4_TURRET)) {
 	        foreach (CraftData rec in RecipeUtil.getRecipesFor("T4EnergyTurretPlacement")) {
-	        	RecipeUtil.modifyIngredientCount(rec, "ExceptionalOrganicLens", 1); //was 2
+	        	rec.modifyIngredientCount("ExceptionalOrganicLens", 1); //was 2
 	        }
         }
         
@@ -202,8 +223,8 @@ namespace ReikaKalseki.FortressTweaks
 	        		rec.Tier = 1;
 	        		rec.CanCraftAnywhere = true;
 	        		rec.Description = "Uncrafting MK"+i+" ampules.";
-	        		RecipeUtil.addIngredient(rec, "AmpuleMK"+i, 1);
-	        		RecipeUtil.addResearch(rec, "Rooms_Herb");
+	        		rec.addIngredient("AmpuleMK"+i, 1);
+	        		rec.addResearch("Rooms_Herb");
 				});
         	}
         }
@@ -211,17 +232,18 @@ namespace ReikaKalseki.FortressTweaks
     	int braincost = config.getInt(FTConfig.ConfigEntries.HIVE_BRAIN);
         if (braincost > 0) {
     		RecipeUtil.addRecipe("RecombinedBrain", "HiveBrainMatter", "craftingingredient", 1, init: rec => {
-        		RecipeUtil.addIngredient(rec, "RecombinedOrganicMatter", (uint)braincost);
+        		rec.addIngredient("RecombinedOrganicMatter", (uint)braincost);
         		rec.ResearchRequirements.Add("Cyrogenics Research"); //yes it is mispelled
     			rec.CanCraftAnywhere = true;
     			rec.ResearchCost = config.getInt(FTConfig.ConfigEntries.HIVE_BRAIN_CRAFT_RPOINTS);
     		});
         }
+    	ItemEntry.mEntriesByKey["HiveBrainMatter"].DecomposeValue = config.getInt(FTConfig.ConfigEntries.HIVE_BRAIN_RPOINTS);
         
         if (config.getBoolean(FTConfig.ConfigEntries.T2LIFT)) {
         	CraftData rec = RecipeUtil.getRecipeByKey("CargoLiftImproved");
-        	RecipeUtil.addIngredient(rec, "AlloyedPCB", 10);
-        	RecipeUtil.removeIngredient(rec, "UltimatePCB");
+        	rec.addIngredient("AlloyedPCB", 10);
+        	rec.removeIngredient("UltimatePCB");
         	rec.Hint = "Can be upgraded again.";
         }
         
@@ -230,9 +252,9 @@ namespace ReikaKalseki.FortressTweaks
 			CraftData rec = RecipeUtil.copyRecipe(template);
 			rec.Key = "ReikaKalseki.GeothermalGeneratorPlacementMan";
 			RecipeUtil.addRecipe(rec);
-        	RecipeUtil.removeIngredient(rec, "ChromedMachineBlock");
-        	CraftCost ing = RecipeUtil.removeIngredient(rec, "MagneticMachineBlock");
-        	RecipeUtil.addIngredient(rec, "HiemalMachineBlock", ing.Amount*9/10);
+        	rec.removeIngredient("ChromedMachineBlock");
+        	CraftCost ing = rec.removeIngredient("MagneticMachineBlock");
+        	rec.addIngredient("HiemalMachineBlock", ing.Amount*9/10);
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.PODUNCRAFT)) {
@@ -245,6 +267,16 @@ namespace ReikaKalseki.FortressTweaks
         		FUtil.log("Adding pod uncrafting recipe "+RecipeUtil.recipeToString(rec));
         	}
         }
+    	
+    	if (TerrainData.mEntriesByKey.ContainsKey("Innominate.BoringCompany")) {
+    		Action<CraftData> setup = (rec) => {
+    			rec.CanCraftAnywhere = true;
+    		};
+    		CraftData r1 = RecipeUtil.addRecipe("BorerStairToSquare", "Innominate.TunnelBoreSquare", "mining", init: setup);
+    		CraftData r2 = RecipeUtil.addRecipe("BorerSquareToStair", "Innominate.TunnelBore", "mining", init: setup);
+    		RecipeUtil.addIngredient(r1, "Innominate.TunnelBore", 1);
+    		RecipeUtil.addIngredient(r2, "Innominate.TunnelBoreSquare", 1);
+    	}
     }
     
     public static float getMagmaborePowerCost(float orig, T4_MagmaBore bore) {
@@ -385,6 +417,13 @@ namespace ReikaKalseki.FortressTweaks
     	mm.mnMaxTransmitDistance = range;
     }
     
+    public static float getMMTransferCost(float val, MatterMover mov) {
+    	if (!config.getBoolean(FTConfig.ConfigEntries.MATTERMITTER_COST_SCALE))
+    		return val;
+    	float f = mov.mnBeamStrokeLength/(float)mov.mnMaxTransmitDistance;
+    	return (int)Mathf.Max(1, val*f);
+    }
+    
     public static float progressGACTimer(float prevTimerValue, float step, GenericAutoCrafterNew gac) {
     	float pf = gac.mrCurrentPower/gac.mrMaxPower;
     	float speed = gac.mrMaxPower <= 0 || float.IsInfinity(pf) || float.IsNaN(pf) ? 1 : Math.Max(1, (pf-0.5F)*4*config.getFloat(FTConfig.ConfigEntries.GAC_RAMP));
@@ -393,6 +432,31 @@ namespace ReikaKalseki.FortressTweaks
     
     public static float getHeadlightEffect() {
     	return config.getFloat(FTConfig.ConfigEntries.HEADLIGHT_MODULE_EFFECT);
+    }
+    
+    public static float loadHeadlightSettings(SurvivalPowerPanel panel) {
+    	float ret = PersistentData.getValue<float>(PersistentData.Values.HEADLIGHT);
+    	FUtil.log("Fetching persistent headlight value "+ret);
+    	
+    	//update UI
+		panel.Headlight_Low.SetActive(false);
+		panel.Headlight_Med.SetActive(false);
+		panel.Headlight_Hi.SetActive(false);
+		panel.HeadlightOn.SetActive(true);
+		if (ret < 15f)
+			panel.HeadlightOn.SetActive(false);
+		if (ret >= 15f)
+			panel.Headlight_Low.SetActive(true);
+		if (ret >= 50f)
+			panel.Headlight_Med.SetActive(true);
+		if (ret >= 150f)
+			panel.Headlight_Hi.SetActive(true);
+    	return ret;
+    }
+    
+    public static void cycleHeadlightSettings(SurvivalPowerPanel panel, float setting) {
+    	//FUtil.log("Updating headlight to "+setting);
+    	PersistentData.setValue(PersistentData.Values.HEADLIGHT, setting);
     }
     
     public static void onVatLinked(RefineryController c, RefineryReactorVat vat) {
@@ -405,12 +469,18 @@ namespace ReikaKalseki.FortressTweaks
     	if (pasteCostCache.TryGetValue(id, out cache)) {
     		cache.costs.TryGetValue(value, out ret);
     	}
+    	if (ret <= 0) {
+    		FUtil.log("Fetched invalid paste cost for block ID "+id+"/"+value+" ("+FUtil.getBlockName(id, value)+"): "+ret+"; attempting fallback value "+cache.anyCost);
+    		ret = cache.anyCost > 0 ? cache.anyCost : 1;
+    	}
     	return ret;
     }
     
     class PasteCostCache {
     	
     	public readonly ushort blockID;
+    	
+    	internal int anyCost;
     	
     	internal readonly Dictionary<ushort, int> costs = new Dictionary<ushort, int>();
     	
@@ -419,6 +489,59 @@ namespace ReikaKalseki.FortressTweaks
     	}
     	
     }
+    
+    public static void debugBlastFurnace(BlastFurnace bf, int[][] recipeCounters) {
+    	FUtil.log("Blast furnace recipe search @ RF="+DifficultySettings.mrResourcesFactor);
+    	List<CraftData> recipesForSet = CraftData.GetRecipesForSet("BlastFurnace");
+    	for(int i = 0; i < recipeCounters.Length; i++) {
+    		FUtil.log("Recipe "+i+": "+recipesForSet[i].recipeToString()+" with cost "+recipesForSet[i].Costs[0].ingredientToString());
+    		FUtil.log("Recipe counter "+i+": ["+string.Join(", ", recipeCounters[i].Select(amt => amt.ToString()).ToArray())+"]");
+    	}
+    	FUtil.log("Current recipe: "+(bf.mCurrentRecipe == null ? "null" : bf.mCurrentRecipe.Key));
+    	FUtil.log("Hoppers:\n"+string.Join("\n", bf.mAttachedHoppers.Select(hop => hop.GetType().Name+" @ "+(new Coordinate((SegmentEntity)hop).ToString())).ToArray()));
+    }
+    
+    public static void spawnTrencherGO(MBOreExtractorDrill drill) {
+		if (drill.mbIsCenter && !drill.DoNotSpawn)
+    		FUtil.setMachineModel(drill, getTrencherModel(drill));
+    }
+    
+    public static SpawnableObjectEnum getTrencherModel(MBOreExtractorDrill drill) {
+    	int mdl = getTrencherVisual(drill.mnMark);
+    	FUtil.log("Trencher @ "+FUtil.machineToString(drill)+" tier "+(drill.mnMark+1)+" is using model #"+mdl+" from config");
+    	switch(mdl) {
+    		case 1:
+    		default:
+    			return SpawnableObjectEnum.MB_Ore_Extractor_Drill;
+    		case 2:
+    			return SpawnableObjectEnum.MB_Ore_Extractor_DrillMk2;
+    		case 3:
+    			return SpawnableObjectEnum.MB_Ore_Extractor_DrillMk3;
+    	}
+    }
+     //tier is 0-2, returns 0-2
+    public static int getTrencherVisual(int tier) {
+    	FTConfig.ConfigEntries option;
+    	tier += 1;
+    	switch(tier) {
+    		case 1:
+    		default:
+    			option = FTConfig.ConfigEntries.TRENCHER_1_MODEL;
+    			break;
+    		case 2:
+    			option = FTConfig.ConfigEntries.TRENCHER_2_MODEL;
+    			break;
+    		case 3:
+    			option = FTConfig.ConfigEntries.TRENCHER_3_MODEL;
+    			break;
+    	}
+    	return config.getInt(option)-1;
+    }
+    /*
+    public static float getLiftCheckPPS(float orig) {
+    	FUtil.log("tied to consume lift check pps: "+orig);
+    	return 100;//config.getFloat(FTConfig.ConfigEntries.LIFT_CHECK_PPS);
+    }*/
 
   }
 }
