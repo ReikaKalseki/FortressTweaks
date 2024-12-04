@@ -74,14 +74,23 @@ namespace ReikaKalseki.FortressTweaks
         	}
         }
         
-        TerrainDataValueEntry[] trencherDrills = new TerrainDataValueEntry[]{
-	        TerrainData.mEntries[eCubeTypes.MachinePlacementBlock].Values[12],
-	        TerrainData.mEntries[eCubeTypes.MachinePlacementBlock].Values[34],
-	        TerrainData.mEntries[eCubeTypes.MachinePlacementBlock].Values[35]
-        };
-        string[] trencherDrillIcons = trencherDrills.Select(e => e.IconName).ToArray();
-        for (int i = 0; i < 3; i++) {
-        	trencherDrills[i].IconName = trencherDrillIcons[getTrencherVisual(i)-1];
+        Dictionary<string, TerrainDataValueEntry> placers = TerrainData.mEntries[eCubeTypes.MachinePlacementBlock].ValuesByKey;
+        try {
+	        TerrainDataValueEntry[] trencherDrills = new TerrainDataValueEntry[]{
+		        placers["TrencherDrillPlacement"],
+		        placers["TrencherDrillPlacementMk2"],
+		        placers["TrencherDrillPlacementMk3"]
+	        };
+	        string[] trencherDrillIcons = trencherDrills.Select(e => e.IconName).ToArray();
+	        for (int i = 0; i < 3; i++) {
+	        	int idx = getTrencherVisual(i);
+	        	trencherDrills[i].IconName = trencherDrillIcons[idx];
+	        	FUtil.log("Trencher tier "+(i+1)+" set to use icon "+(idx+1)+" ("+trencherDrills[i].IconName+")");
+	        }
+        }
+        catch (Exception e) {
+        	FUtil.log("Could not set trencher drill icons: "+e.ToString());
+        	FUtil.log("MB Placer values:\n"+string.Join("\n", placers.Select(kvp => kvp.Key+"=="+kvp.Value.terrainDataValueToString()).ToArray()));
         }
         
         CubeHelper.mabIsCubeTypeGlass[eCubeTypes.EnergyGrommet] = true;
@@ -509,7 +518,7 @@ namespace ReikaKalseki.FortressTweaks
     public static SpawnableObjectEnum getTrencherModel(MBOreExtractorDrill drill) {
     	int mdl = getTrencherVisual(drill.mnMark);
     	FUtil.log("Trencher @ "+FUtil.machineToString(drill)+" tier "+(drill.mnMark+1)+" is using model #"+mdl+" from config");
-    	switch(mdl) {
+    	switch(mdl+1) {
     		case 1:
     		default:
     			return SpawnableObjectEnum.MB_Ore_Extractor_Drill;
