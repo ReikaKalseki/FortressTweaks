@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfItemEntry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ItemEntry>
+    <Key>ReikaKalseki.BlockCopier</Key>
+    <Name>Block Copier</Name>
+    <Plural>Block Copiers</Plural>
+    <Type>ItemStack</Type>
+    <!-- Should they stack? -->
+    <Object>UnknownItem</Object>
+    <Sprite>ReikaKalseki.BlockCopier</Sprite>
+    <Category>Consumable</Category>
+    <ItemAction>Custom</ItemAction>
+	<ActionParameter>Unknown</ActionParameter>
+  </ItemEntry>
+</ArrayOfItemEntry>

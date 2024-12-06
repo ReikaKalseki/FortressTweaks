@@ -27,6 +27,23 @@ namespace ReikaKalseki.FortressTweaks
     	return config;
     }
 
+	public override ModItemActionResults PerformItemAction(ModItemActionParameters parameters) {
+    	if (parameters.ItemToUse.mnItemID == ItemEntry.mEntriesByKey["ReikaKalseki.BlockCopier"].ItemID) {
+    		parameters.Consume = false;
+    		LocalPlayerScript ep = parameters.Consumer.mLocalPlayer;
+    		PlayerBlockPicker pbp = ep.mPlayerBlockPicker;
+    		ushort id = pbp.selectBlockType;
+    		ushort meta = pbp.selectBlockValue;
+    		WorldUtil.buildBlockAtLook(parameters.Consumer.mLocalPlayer, parameters.ItemToUse, id, meta);
+    		ARTHERPetSurvival.instance.SetARTHERReadoutText("Replicated ["+id+"/"+meta+"] ("+FUtil.getBlockName(id, meta)+") into "+Coordinate.fromLook(ep), 10, false, true);
+    		ModItemActionResults res = new ModItemActionResults();
+    		AudioHUDManager.instance.Build(WorldScript.instance.mPlayerFrustrum.GetCoordsToUnity(pbp.selectFaceX, pbp.selectFaceY, pbp.selectFaceZ) + WorldHelper.DefaultBlockOffset);
+    		res.Consume = false;
+    		return res;
+    	}
+		return null;
+	}
+
     protected override void loadMod(ModRegistrationData registrationData) {
     	validateDLLs();
         
@@ -102,6 +119,7 @@ namespace ReikaKalseki.FortressTweaks
         FreightCartMob.OreFreighterWithdrawalPerTick = config.getInt(FTConfig.ConfigEntries.FREIGHT_SPEED); //base is 5, barely better than minecarts; was 25 here until 2022
         
         T3_FuelCompressor.MAX_HIGHOCTANE = config.getInt(FTConfig.ConfigEntries.HOF_CACHE);
+        T3_FuelCompressor.COAL_NEEDED = config.getInt(FTConfig.ConfigEntries.HOF_COAL);
         
         applyRecipeChanges();
     }
@@ -262,8 +280,7 @@ namespace ReikaKalseki.FortressTweaks
 			rec.Key = "ReikaKalseki.GeothermalGeneratorPlacementMan";
 			RecipeUtil.addRecipe(rec);
         	rec.removeIngredient("ChromedMachineBlock");
-        	CraftCost ing = rec.removeIngredient("MagneticMachineBlock");
-        	rec.addIngredient("HiemalMachineBlock", ing.Amount*9/10);
+        	rec.replaceIngredient("MagneticMachineBlock", "HiemalMachineBlock", 0.9F);
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.PODUNCRAFT)) {

@@ -13,6 +13,7 @@ namespace ReikaKalseki.FortressTweaks
 		public enum ConfigEntries {
 			[ConfigEntry("Ore Freighter Unload Speed", typeof(int), 40, 1, 5000, 5)]FREIGHT_SPEED,
 			[ConfigEntry("Fuel Compressor Output Buffer Limit", typeof(int), 10, 0, 10000, 100)]HOF_CACHE,
+			[ConfigEntry("High Octane Fuel Coal Cost", typeof(int), 100, 10, 1000, 200)]HOF_COAL,
 			[ConfigEntry("Scale MagmaBore drill cost with difficulty", true)]MAGMABORE,
 			[ConfigEntry("Boost gas/particle systems when power-rich", true)]GAS_SPEED,
 			[ConfigEntry("Boost Fuel Compressor systems when power-rich and storage is nearly full", true)]FUELCOM_SPEED,
