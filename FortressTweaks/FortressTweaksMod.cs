@@ -4,6 +4,7 @@ using System;    //For data read/write methods
 using System.Collections.Generic;   //Working with Lists and Collections
 using System.Linq;   //More advanced manipulation of lists/collections
 using System.Reflection.Emit;
+using System.Xml;
 using Harmony;
 using ReikaKalseki.FortressTweaks;
 using ReikaKalseki.FortressCore;
@@ -18,6 +19,8 @@ namespace ReikaKalseki.FortressTweaks
     private static Config<FTConfig.ConfigEntries> config;
     
     private static readonly Dictionary<ushort, PasteCostCache> pasteCostCache = new Dictionary<ushort, PasteCostCache>();
+    
+    private static readonly Dictionary<ushort, float>[] trencherEfficiencies = new Dictionary<ushort, float>[3];
     
     public FortressTweaksMod() : base("FortressTweaks") {
     	config = new Config<FTConfig.ConfigEntries>(this);
@@ -43,11 +46,82 @@ namespace ReikaKalseki.FortressTweaks
     	}
 		return null;
 	}
+    
+    private static float getDefaultTrencherEfficiency(int tier, int oreTier) {
+    	switch(tier) {
+    		case 1:
+    			if (oreTier <= 1)
+    				return 80F;
+    			else if (oreTier == 2)
+    				return 75F;
+    			else if (oreTier == 3)
+    				return 50F;
+    			else if (oreTier == 4)
+    				return 5F;
+    			else
+    				return 1F;
+    		case 2:
+    			if (oreTier <= 2)
+    				return 100F;
+    			else if (oreTier == 3)
+    				return 80F;
+    			else if (oreTier == 4)
+    				return 25F;
+    			else
+    				return 10F;
+    		case 3:
+    		default:
+    			return 100F;
+    	}
+    }
 
     protected override void loadMod(ModRegistrationData registrationData) {
     	validateDLLs();
         
         config.load();
+        
+        try {
+			XmlDocument doc = new XmlDocument();
+	    	string file = Path.Combine(Path.GetDirectoryName(modDLL.Location), "TrencherEfficiencies.xml");
+	        if (!File.Exists(file)) {
+		    	List<TerrainDataEntry> oreIDs = FUtil.getOres().ToList();
+		    	oreIDs.Add(new TerrainDataEntry{CubeType = 0, Name = "Fallback"});
+	        	FUtil.log("Trencher efficiency table does not exist, generating defaults.");
+		    	XmlElement root = doc.CreateElement("Root");
+		    	doc.AppendChild(root);
+	        	for (int i = 1; i <= 3; i++) {
+		    		XmlElement e = doc.CreateElement("MK"+i);
+		    		foreach (TerrainDataEntry td in oreIDs) {
+		    			XmlElement e2 = doc.CreateElement("Ore");
+		    			e2.SetAttribute("CubeType", td.CubeType.ToString());
+		    			e2.SetAttribute("Name", td.Name);
+		    			int tier = FUtil.getOreTier(td.CubeType);
+		    			e2.SetAttribute("Tier", tier.ToString());
+		    			e2.SetAttribute("Efficiency", getDefaultTrencherEfficiency(i, tier).ToString("0.000"));
+		    			e.AppendChild(e2);
+		    		}
+		    		doc.DocumentElement.AppendChild(e);
+	        	}
+	        	doc.Save(file);
+	        }
+	    	else {
+	    		FUtil.log("Loading trencher efficiency configs.");
+	    		doc.Load(file);
+	    	}
+	    	for (int i = 1; i <= 3; i++) {
+	    		trencherEfficiencies[i] = new Dictionary<ushort, float>();
+	    		XmlElement e = (XmlElement)doc.DocumentElement.GetElementsByTagName("MK"+i)[0];
+	    		foreach (XmlElement ore in e.ChildNodes) {
+	    			ushort id = ushort.Parse(ore.GetAttribute("CubeType"));
+	    			float eff = float.Parse(ore.GetAttribute("Efficiency"))/100F;
+	    			trencherEfficiencies[i][id] = eff;
+	    			//FUtil.log("Loaded efficiency "+eff.ToString("0.00")+" for id "+id);
+	    		}
+	    	}
+        }
+        catch (Exception e) {
+        	FUtil.log("Failed to load trencher efficiency configs: "+e.ToString());
+        }
         
         PersistentData.load(Path.Combine(Path.GetDirectoryName(modDLL.Location), "persistent.dat"));
         
@@ -394,10 +468,12 @@ namespace ReikaKalseki.FortressTweaks
     }
     
     public static StorageMachineInterface getStorageHandlerForEntityForBelt(Segment s, long x, long y, long z, ConveyorEntity belt) {
-    	SegmentEntity ret = s.SearchEntity(x, y, z);
-    	if (belt.mValue == 15) {
-    		//Debug.Log("Motor belt at "+new Coordinate(belt)+" is pulling from a "+ret+" at "+new Coordinate(ret));
+    	if (belt.mValue == 15 && s.GetCube(x, y, z) == eCubeTypes.LogisticsGrommet) {
+    		x -= (int)belt.mForwards.x;
+    		y -= (int)belt.mForwards.y;
+    		z -= (int)belt.mForwards.z;
     	}
+    	SegmentEntity ret = s.SearchEntity(x, y, z);
     	if (ret is ContinuousCastingBasin && belt.mValue == 15) { //motor belt
     		ContinuousCastingBasin ccb = ret as ContinuousCastingBasin;
     		ccb = ccb.GetCenter();
@@ -527,6 +603,13 @@ namespace ReikaKalseki.FortressTweaks
     	FUtil.log("Hoppers:\n"+string.Join("\n", bf.mAttachedHoppers.Select(hop => hop.GetType().Name+" @ "+(new Coordinate((SegmentEntity)hop).ToString())).ToArray()));
     }
     
+    public static void calcTrencherEfficiency(MBOreExtractorDrill drill, ushort ore, int hardness) {
+    	int tier = ((drill.mValue-1)/2); //0-2
+    	Dictionary<ushort, float> dict = trencherEfficiencies[tier];
+    	drill.mrEfficiencyBonus = dict.ContainsKey(ore) ? dict[ore] : dict[(ushort)0];
+    	FUtil.log("Trencher tier "+tier+" computed an efficiency of "+drill.mrEfficiencyBonus.ToString("0.000")+" for ore ID "+ore+" ("+FUtil.getBlockName(ore, 0)+")");
+    }
+    
     public static void spawnTrencherGO(MBOreExtractorDrill drill) {
 		if (drill.mbIsCenter && !drill.DoNotSpawn)
     		FUtil.setMachineModel(drill, getTrencherModel(drill));
@@ -534,7 +617,7 @@ namespace ReikaKalseki.FortressTweaks
     
     public static SpawnableObjectEnum getTrencherModel(MBOreExtractorDrill drill) {
     	int mdl = getTrencherVisual(drill.mnMark);
-    	FUtil.log("Trencher @ "+FUtil.machineToString(drill)+" tier "+(drill.mnMark+1)+" is using model #"+mdl+" from config");
+    	FUtil.log("Trencher @ "+drill.machineToString()+" tier "+(drill.mnMark+1)+" is using model #"+mdl+" from config");
     	switch(mdl+1) {
     		case 1:
     		default:
@@ -568,6 +651,72 @@ namespace ReikaKalseki.FortressTweaks
     	FUtil.log("tied to consume lift check pps: "+orig);
     	return 100;//config.getFloat(FTConfig.ConfigEntries.LIFT_CHECK_PPS);
     }*/
-
+    
+    public static SegmentEntity createModdedSegmentEntity(Segment s, eSegmentEntity type, long x, long y, long z, ushort id, byte flags, ushort meta, bool fromDisk, bool fromNet, ModManager mgr, ModCreateSegmentEntityParameters pp, ModCreateSegmentEntityResults res, FortressCraftMod[] overrides) {
+    	//FUtil.log("Creating segment entity @ "+new Coordinate(x, y, z)+" ("+Coordinate.fromRawXYZ(x, y, z)+") for "+id+"/"+meta+" ('"+FUtil.getBlockName(id, meta)+"') flags="+flags+" type="+type.ToString());
+		if (type == eSegmentEntity.Mod) {
+			TerrainDataEntry e = TerrainData.mEntries[(int)id];
+			if (e != null) {
+				TerrainDataValueEntry value = e.GetValue(meta);
+				FortressCraftMod mod = null;
+				if (value != null && value.ModEntityHandler != null)
+					mod = value.ModEntityHandler;
+				if (e.ModEntityHandler != null)
+					mod = e.ModEntityHandler;
+				if (mod != null) {
+					pp.Type = type;
+					pp.Segment = s;
+					pp.X = x;
+					pp.Y = y;
+					pp.Z = z;
+					pp.Cube = id;
+					pp.Flags = flags;
+					pp.Value = meta;
+					pp.LoadFromDisk = fromDisk;
+					pp.FromNetwork = fromNet;
+					pp.ObjectType = SpawnableObjectEnum.Error;
+					mod.CreateSegmentEntity(pp, res);
+					pp.Segment = null;
+					SegmentEntity entity = res.Entity;
+					res.Entity = null;
+					//FUtil.log("Handled by mod "+mod.GetType().Name+": "+entity.machineToStringNoWorld()+" with render "+pp.ObjectType);
+					return entity;
+				}
+			}
+			FUtil.log("Failed to find a matching handler, TDEntry="+e.terrainDataToString());
+			return new UnrecognisedEntity(s, x, y, z, id, flags, meta);
+		}
+    	else {
+			FortressCraftMod mod = overrides[(int)type];
+			if (mod == null) {
+				//FUtil.log("Is vanilla type with no mod override");
+				return null;
+			}
+			pp.Type = type;
+			pp.Segment = s;
+			pp.X = x;
+			pp.Y = y;
+			pp.Z = z;
+			pp.Cube = id;
+			pp.Flags = flags;
+			pp.Value = meta;
+			pp.LoadFromDisk = fromDisk;
+			pp.FromNetwork = fromNet;
+			pp.ObjectType = SpawnableObjectEnum.Error;
+			mod.CreateSegmentEntity(pp, res);
+			pp.Segment = null;
+			SegmentEntity e2 = res.Entity;
+			res.Entity = null;
+			//FUtil.log("Found mod override "+mod.GetType().Name+": "+e2.machineToString()+" with render "+pp.ObjectType);
+			return e2;
+    	}
+    }
+    
+    public static float getGasBottlerDecantTimer(float orig, T4_GasBottler gas, ItemBase stored) {/*
+    	if (stored == null)
+    		return orig;
+    	return Mathf.Max(0.1F, orig-stored.GetAmount()*0.1F);*/
+    	return 0.1F;
+    }
   }
 }

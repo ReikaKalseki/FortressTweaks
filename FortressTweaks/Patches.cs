@@ -1145,6 +1145,97 @@ namespace ReikaKalseki.FortressTweaks {
 			return codes.AsEnumerable();
 		}
 	}*/
+	[HarmonyPatch(typeof(ModManager))]
+	[HarmonyPatch("CreateSegmentEntity")]
+	public static class ModEntityHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>();
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_1));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_2));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_3));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_S, 4));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_S, 5));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_S, 6));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_S, 7));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_S, 8));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_S, 9));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_S, 10));
+				
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_0));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_0));
+				codes.Add(new CodeInstruction(OpCodes.Ldfld, InstructionHandlers.convertFieldOperand(typeof(ModManager), "mCachedEntityParameters")));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_0));
+				codes.Add(new CodeInstruction(OpCodes.Ldfld, InstructionHandlers.convertFieldOperand(typeof(ModManager), "mCachedEntityResults")));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_0));
+				codes.Add(new CodeInstruction(OpCodes.Ldfld, InstructionHandlers.convertFieldOperand(typeof(ModManager), "mOverrideSegmentEntityHandlers")));
+				codes.Add(InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "createModdedSegmentEntity", false, new Type[]{typeof(Segment), typeof(eSegmentEntity), typeof(long), typeof(long), typeof(long), typeof(ushort), typeof(byte), typeof(ushort), typeof(bool), typeof(bool), typeof(ModManager), typeof(ModCreateSegmentEntityParameters), typeof(ModCreateSegmentEntityResults), typeof(FortressCraftMod).MakeArrayType()}));
+				codes.Add(new CodeInstruction(OpCodes.Ret));
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(T4_GasBottler))]
+	[HarmonyPatch("CheckHopper")]
+	public static class GasBottleRateHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				int idx = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldc_R4, 0.6F);
+				codes.InsertRange(idx+1, new List<CodeInstruction>{
+					new CodeInstruction(OpCodes.Ldarg_0),
+					new CodeInstruction(OpCodes.Ldarg_0),
+					new CodeInstruction(OpCodes.Ldfld, InstructionHandlers.convertFieldOperand(typeof(T4_GasBottler), "StoredGas")),
+					InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "getGasBottlerDecantTimer", false, new Type[]{typeof(float), typeof(T4_GasBottler), typeof(ItemBase)})
+				});
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
+	
+	[HarmonyPatch(typeof(MBOreExtractorDrill))]
+	[HarmonyPatch("DetermineEfficiencyBonus")]
+	public static class TrencherEfficiencyHook {
+		
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+			List<CodeInstruction> codes = new List<CodeInstruction>();
+			try {
+				FileLog.Log("Running patch "+MethodBase.GetCurrentMethod().DeclaringType);
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_0));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_1));
+				codes.Add(new CodeInstruction(OpCodes.Ldarg_2));
+				codes.Add(InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "calcTrencherEfficiency", false, new Type[]{typeof(MBOreExtractorDrill), typeof(ushort), typeof(int)}));
+				codes.Add(new CodeInstruction(OpCodes.Ret));
+				FileLog.Log("Done patch "+MethodBase.GetCurrentMethod().DeclaringType);
+			}
+			catch (Exception e) {
+				FileLog.Log("Caught exception when running patch "+MethodBase.GetCurrentMethod().DeclaringType+"!");
+				FileLog.Log(e.Message);
+				FileLog.Log(e.StackTrace);
+				FileLog.Log(e.ToString());
+			}
+			return codes.AsEnumerable();
+		}
+	}
 	
 	static class Lib {
 		
