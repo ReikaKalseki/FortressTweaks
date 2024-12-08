@@ -108,9 +108,9 @@ namespace ReikaKalseki.FortressTweaks
 	    		FUtil.log("Loading trencher efficiency configs.");
 	    		doc.Load(file);
 	    	}
-	    	for (int i = 1; i <= 3; i++) {
+	    	for (int i = 0; i < 3; i++) {
 	    		trencherEfficiencies[i] = new Dictionary<ushort, float>();
-	    		XmlElement e = (XmlElement)doc.DocumentElement.GetElementsByTagName("MK"+i)[0];
+	    		XmlElement e = (XmlElement)doc.DocumentElement.GetElementsByTagName("MK"+(i+1))[0];
 	    		foreach (XmlElement ore in e.ChildNodes) {
 	    			ushort id = ushort.Parse(ore.GetAttribute("CubeType"));
 	    			float eff = float.Parse(ore.GetAttribute("Efficiency"))/100F;
@@ -606,8 +606,10 @@ namespace ReikaKalseki.FortressTweaks
     public static void calcTrencherEfficiency(MBOreExtractorDrill drill, ushort ore, int hardness) {
     	int tier = ((drill.mValue-1)/2); //0-2
     	Dictionary<ushort, float> dict = trencherEfficiencies[tier];
-    	drill.mrEfficiencyBonus = dict.ContainsKey(ore) ? dict[ore] : dict[(ushort)0];
+    	drill.mrEfficiencyBonus = dict == null ? 1 : (dict.ContainsKey(ore) ? dict[ore] : dict[(ushort)0]);
     	FUtil.log("Trencher tier "+tier+" computed an efficiency of "+drill.mrEfficiencyBonus.ToString("0.000")+" for ore ID "+ore+" ("+FUtil.getBlockName(ore, 0)+")");
+    	if (dict == null)
+    		FUtil.log("TRENCHER EFFICIENCY DATA MISSING");
     }
     
     public static void spawnTrencherGO(MBOreExtractorDrill drill) {
