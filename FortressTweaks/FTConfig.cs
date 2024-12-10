@@ -63,6 +63,7 @@ namespace ReikaKalseki.FortressTweaks
 			[ConfigEntry("Tier 3 Trencher Drill Model", typeof(int), 2, 1, 3, 3)]TRENCHER_3_MODEL,
 			//[ConfigEntry("Cargo Lift Rail Building PPS Cost", typeof(float), 50, 1, 5000000, 100)]LIFT_RAIL_PPS,
 			[ConfigEntry("Cargo Lift Rail Check PPS Cost", typeof(float), 10, 1, 1000, 10)]LIFT_CHECK_PPS,
+			[ConfigEntry("Preserve Player Position After Save/Reload", true)]KEEP_PLAYER_POS,
 		}
 	}
 }

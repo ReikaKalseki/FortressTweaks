@@ -17,6 +17,7 @@ using UnityEngine;
 using ReikaKalseki.FortressCore;
 
 namespace ReikaKalseki.FortressTweaks {
+	
 	public class PersistentData {
 		
 		private static readonly object[] values = new object[Enum.GetValues(typeof(Values)).Length];
@@ -130,6 +131,8 @@ namespace ReikaKalseki.FortressTweaks {
 					return float.Parse(val);
 				case "double":
 					return double.Parse(val);
+				case "Coordinate":
+					return new Coordinate(long.Parse(e.GetAttribute("x")), long.Parse(e.GetAttribute("y")), long.Parse(e.GetAttribute("z")));
 			}
 			FUtil.log("Could not parse value '"+val+"' for type "+type);
 			return null;
@@ -144,24 +147,35 @@ namespace ReikaKalseki.FortressTweaks {
 			XmlAttribute attr = e.OwnerDocument.CreateAttribute("type");
 			attr.Value = type.Name;
 			e.Attributes.Append(attr);
-			string str = "";
-			if (value is string)
-				str = (string)value;
-			else if (value is bool || value is int || value is uint || value is byte || value is short || value is ushort || value is long || value is ulong)
-				str = value.ToString();
-			else if (value is float)
-				str = ((float)value).ToString("0.00000000");
-			else if (value is double)
-				str = ((double)value).ToString("0.0000000000000000");
-			else
-				str = "Unformattable type";
-			attr = e.OwnerDocument.CreateAttribute("value");
-			attr.Value = str;
-			e.Attributes.Append(attr);
+			if (value is Coordinate) {
+				Coordinate c = (Coordinate)value;
+				attr = e.OwnerDocument.CreateAttribute("x");
+				attr.Value = c.xCoord.ToString();
+				attr.Value = c.yCoord.ToString();
+				attr.Value = c.zCoord.ToString();
+				e.Attributes.Append(attr);
+			}
+			else {
+				string str = "";
+				if (value is string)
+					str = (string)value;
+				else if (value is bool || value is int || value is uint || value is byte || value is short || value is ushort || value is long || value is ulong)
+					str = value.ToString();
+				else if (value is float)
+					str = ((float)value).ToString("0.00000000");
+				else if (value is double)
+					str = ((double)value).ToString("0.0000000000000000");
+				else
+					str = "Unformattable type";
+				attr = e.OwnerDocument.CreateAttribute("value");
+				attr.Value = str;
+				e.Attributes.Append(attr);
+			}
 		}
 	
 		public enum Values {
 			HEADLIGHT,
+			POSITION,
 		}
 				
 	}

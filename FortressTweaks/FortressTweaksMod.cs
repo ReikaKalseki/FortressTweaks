@@ -86,6 +86,7 @@ namespace ReikaKalseki.FortressTweaks
 	        if (!File.Exists(file)) {
 		    	List<TerrainDataEntry> oreIDs = FUtil.getOres().ToList();
 		    	oreIDs.Add(new TerrainDataEntry{CubeType = 0, Name = "Fallback"});
+		    	FUtil.sortOreList(oreIDs);
 	        	FUtil.log("Trencher efficiency table does not exist, generating defaults.");
 		    	XmlElement root = doc.CreateElement("Root");
 		    	doc.AppendChild(root);
@@ -350,11 +351,16 @@ namespace ReikaKalseki.FortressTweaks
         
         if (config.getBoolean(FTConfig.ConfigEntries.GEOHEIM)) {
         	CraftData template = RecipeUtil.getRecipeByKey("GeothermalGeneratorPlacementMan");
-			CraftData rec = RecipeUtil.copyRecipe(template);
-			rec.Key = "ReikaKalseki.GeothermalGeneratorPlacementMan";
-			RecipeUtil.addRecipe(rec);
+			CraftData rec = RecipeUtil.copyRecipe(template, "ReikaKalseki.GeothermalGeneratorPlacementManHiemal");
+			bool intf = ItemEntry.mEntriesByKey.ContainsKey("ReikaKalseki.CryoResin"); //IntegratedFactory
+			float ratio = intf ? 0.5F : 0.9F;
         	rec.removeIngredient("ChromedMachineBlock");
-        	rec.replaceIngredient("MagneticMachineBlock", "HiemalMachineBlock", 0.9F);
+        	rec.replaceIngredient("MagneticMachineBlock", "HiemalMachineBlock", ratio);
+        	if (intf) {
+	        	rec.CraftedAmount *= 3;
+	        	rec.Costs.ForEach(c => c.Amount *= 2); //+50% yield again, so now need 5 crafts that cost 2x as much (so == 10 crafts' worth) -> 500 hiemal blocks for the whole thing 
+        	}
+			RecipeUtil.addRecipe(rec);
         }
         
         if (config.getBoolean(FTConfig.ConfigEntries.PODUNCRAFT)) {
@@ -374,8 +380,8 @@ namespace ReikaKalseki.FortressTweaks
     		};
     		CraftData r1 = RecipeUtil.addRecipe("BorerStairToSquare", "Innominate.TunnelBoreSquare", "mining", init: setup);
     		CraftData r2 = RecipeUtil.addRecipe("BorerSquareToStair", "Innominate.TunnelBore", "mining", init: setup);
-    		RecipeUtil.addIngredient(r1, "Innominate.TunnelBore", 1);
-    		RecipeUtil.addIngredient(r2, "Innominate.TunnelBoreSquare", 1);
+    		r1.addIngredient("Innominate.TunnelBore", 1);
+    		r2.addIngredient("Innominate.TunnelBoreSquare", 1);
     	}
     }
     
@@ -478,6 +484,11 @@ namespace ReikaKalseki.FortressTweaks
     		ContinuousCastingBasin ccb = ret as ContinuousCastingBasin;
     		ccb = ccb.GetCenter();
     		return ccb != null ? new BasinInterfaceWrapper(ccb) : null;
+    	}
+    	else if (ret is T4_GasBottler && belt.mValue == 15) { //motor belt
+    		T4_GasBottler ccb = ret as T4_GasBottler;
+    		ccb = ccb.mLinkedCenter;
+    		return ccb != null ? new BottlerInterfaceWrapper(ccb) : null;
     	}
     	else {
     		return ret as StorageMachineInterface;
@@ -607,7 +618,7 @@ namespace ReikaKalseki.FortressTweaks
     	int tier = ((drill.mValue-1)/2); //0-2
     	Dictionary<ushort, float> dict = trencherEfficiencies[tier];
     	drill.mrEfficiencyBonus = dict == null ? 1 : (dict.ContainsKey(ore) ? dict[ore] : dict[(ushort)0]);
-    	FUtil.log("Trencher tier "+tier+" computed an efficiency of "+drill.mrEfficiencyBonus.ToString("0.000")+" for ore ID "+ore+" ("+FUtil.getBlockName(ore, 0)+")");
+    	FUtil.log("Trencher MK"+(tier+1)+" computed an efficiency of "+(drill.mrEfficiencyBonus*100).ToString("0.000")+"% for ore ID "+ore+" ("+FUtil.getBlockName(ore, 0)+")");
     	if (dict == null)
     		FUtil.log("TRENCHER EFFICIENCY DATA MISSING");
     }
@@ -718,7 +729,7 @@ namespace ReikaKalseki.FortressTweaks
     	if (stored == null)
     		return orig;
     	return Mathf.Max(0.1F, orig-stored.GetAmount()*0.1F);*/
-    	return 0.1F;
+    	return 0;
     }
   }
 }
