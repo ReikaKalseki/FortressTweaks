@@ -96,6 +96,8 @@ namespace ReikaKalseki.FortressTweaks {
 		}
 		
 		public static object parseValue(XmlElement e) {
+			if (e.InnerText == null)
+				return null;
 			string type = e.GetAttribute("type").ToLowerInvariant();
 			if (string.IsNullOrEmpty(type))
 				return null;
@@ -132,9 +134,13 @@ namespace ReikaKalseki.FortressTweaks {
 				case "double":
 					return double.Parse(val);
 				case "Coordinate":
+				case "coordinate":
 					return new Coordinate(long.Parse(e.GetAttribute("x")), long.Parse(e.GetAttribute("y")), long.Parse(e.GetAttribute("z")));
+				case "Vector3":
+				case "vector3":
+					return new Vector3(float.Parse(e.GetAttribute("x")), float.Parse(e.GetAttribute("y")), float.Parse(e.GetAttribute("z")));
 			}
-			FUtil.log("Could not parse value '"+val+"' for type "+type);
+			FUtil.log("Could not parse value '"+val+"' in xml '"+e.OuterXml+"' for type "+type);
 			return null;
 		}
 			
@@ -150,9 +156,25 @@ namespace ReikaKalseki.FortressTweaks {
 			if (value is Coordinate) {
 				Coordinate c = (Coordinate)value;
 				attr = e.OwnerDocument.CreateAttribute("x");
+				e.Attributes.Append(attr);
 				attr.Value = c.xCoord.ToString();
+				attr = e.OwnerDocument.CreateAttribute("y");
+				e.Attributes.Append(attr);
 				attr.Value = c.yCoord.ToString();
+				attr = e.OwnerDocument.CreateAttribute("z");
 				attr.Value = c.zCoord.ToString();
+				e.Attributes.Append(attr);
+			}
+			else if (value is Vector3) {
+				Vector3 c = (Vector3)value;
+				attr = e.OwnerDocument.CreateAttribute("x");
+				e.Attributes.Append(attr);
+				attr.Value = c.x.ToString("0.00000");
+				attr = e.OwnerDocument.CreateAttribute("y");
+				e.Attributes.Append(attr);
+				attr.Value = c.y.ToString("0.00000");
+				attr = e.OwnerDocument.CreateAttribute("z");
+				attr.Value = c.z.ToString("0.00000");
 				e.Attributes.Append(attr);
 			}
 			else {
@@ -176,6 +198,7 @@ namespace ReikaKalseki.FortressTweaks {
 		public enum Values {
 			HEADLIGHT,
 			POSITION,
+			LOOK,
 		}
 				
 	}

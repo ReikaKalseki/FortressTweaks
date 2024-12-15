@@ -130,12 +130,29 @@ namespace ReikaKalseki.FortressTweaks
         
         Type t = InstructionHandlers.getTypeBySimpleName("DiNSCustomT4Turret");
 		if (t != null) {
+        	FUtil.log("Patching "+t.Name);
 			InstructionHandlers.patchMethod(harmony, t, "TrackTarget", modDLL, codes => {
 				int idx = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Ldc_R4, 37800F);
 				codes[idx].operand = config.getFloat(FTConfig.ConfigEntries.MK4_TURRET_PPS);
 			});
         	FUtil.log("Patch to "+t.Name+" complete.");
 		}
+        
+        t = InstructionHandlers.getTypeBySimpleName("MadVandal.HotbarExtender.HotbarExtenderMod");
+		if (t != null) {
+        	FUtil.log("Patching hotbar extender to add own save hook");
+			InstructionHandlers.patchMethod(harmony, t, "SaveData", modDLL, codes => {
+        		InstructionHandlers.patchInitialHook(codes, InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "onSaveAndExit", false, new Type[0]));
+			});
+        	FUtil.log("Patch to "+t.Name+" complete.");
+		}
+        else {
+        	FUtil.log("Hotbar extender not found, adding patch to GameManager.LeaveWorld");
+			InstructionHandlers.patchMethod(harmony, t, "TrackTarget", modDLL, codes => {
+	        	int idx = InstructionHandlers.getInstruction(codes, 0, 0, OpCodes.Callvirt, typeof(PlayerPersistentState), "MarkDirty", true, new Type[0]);
+				codes.Insert(idx+1, InstructionHandlers.createMethodCall(typeof(FortressTweaksMod), "onSaveAndExit", false, new Type[0]));
+			});
+        }
         
         //makes them drop as paste
         for (int i = eCubeTypes.CanvasYellow; i < eCubeTypes.CanvasBlack; i++) {
@@ -370,7 +387,7 @@ namespace ReikaKalseki.FortressTweaks
         	foreach (OverrideCraftData data in li) {
         		CraftData rec = data.ToStandardFormat();
 				RecipeUtil.addRecipe(rec);
-        		FUtil.log("Adding pod uncrafting recipe "+RecipeUtil.recipeToString(rec));
+        		FUtil.log("Adding pod uncrafting recipe "+rec.recipeToString(true));
         	}
         }
     	
@@ -463,6 +480,8 @@ namespace ReikaKalseki.FortressTweaks
     public static bool isCubeGlassForRoom(ushort blockID, RoomController rc) {
     	if (blockID == eCubeTypes.EnergyGrommet || blockID == eCubeTypes.LogisticsGrommet)
     		return false;
+    	if (blockID == eCubeTypes.PowerStorageBlock)
+    		return false;
     	return CubeHelper.IsCubeGlass((int)blockID);
     }
     
@@ -547,7 +566,7 @@ namespace ReikaKalseki.FortressTweaks
     	return config.getFloat(FTConfig.ConfigEntries.HEADLIGHT_MODULE_EFFECT);
     }
     
-    public static float loadHeadlightSettings(SurvivalPowerPanel panel) {
+    public static float restoreSavedPlayerData(SurvivalPowerPanel panel) {
     	float ret = PersistentData.getValue<float>(PersistentData.Values.HEADLIGHT);
     	FUtil.log("Fetching persistent headlight value "+ret);
     	
@@ -564,6 +583,14 @@ namespace ReikaKalseki.FortressTweaks
 			panel.Headlight_Med.SetActive(true);
 		if (ret >= 150f)
 			panel.Headlight_Hi.SetActive(true);
+		
+		if (config.getBoolean(FTConfig.ConfigEntries.KEEP_PLAYER_POS)) {
+			Coordinate c = PersistentData.getValue<Coordinate>(PersistentData.Values.POSITION);
+			FUtil.log("Fetching persistent player pos "+c+(c == null ? "" : " ("+c.fromRaw()+")"));
+			if (c != null)
+				WorldScript.instance.localPlayerInstance.Teleport(c.xCoord, c.yCoord, c.zCoord, PersistentData.getValue<Vector3>(PersistentData.Values.LOOK), true);
+		}
+		
     	return ret;
     }
     
@@ -730,6 +757,15 @@ namespace ReikaKalseki.FortressTweaks
     		return orig;
     	return Mathf.Max(0.1F, orig-stored.GetAmount()*0.1F);*/
     	return 0;
+    }
+    
+    public static void onSaveAndExit() {
+    	FUtil.log("Save and exit: "+new Exception().StackTrace);
+    	if (config.getBoolean(FTConfig.ConfigEntries.KEEP_PLAYER_POS)) {
+    		Player ep = WorldScript.mLocalPlayer;
+    		PersistentData.setValue(PersistentData.Values.POSITION, new Coordinate(ep.mnWorldX, ep.mnWorldY, ep.mnWorldZ));
+    		PersistentData.setValue(PersistentData.Values.LOOK, ep.mLook);
+    	}
     }
   }
 }
